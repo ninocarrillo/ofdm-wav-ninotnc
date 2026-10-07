@@ -148,10 +148,10 @@ int main(int arg_count, char* arg_values[]) {
 		// Generate sync symbol
 		Transmitter.BasebandSamples = baseband_samples; // Put pointer to baseband samples in the Transmitter struct
 		Transmitter.Randomizer = OFDM_RAND_SEED;
+		Transmitter.Syncfield.Word = 0;
 		Transmitter.Syncfield.Fields.Constellation = const_arg & 7;
 		Transmitter.Syncfield.Fields.BlockCode = block_code_arg & 1;
 		Transmitter.Syncfield.Fields.TrellisCode = 0;
-		Transmitter.Syncfield.Fields.Unused = 0;
 		Transmitter.Syncfield.Fields.RandomizerIndex++;
 		Transmitter.Syncfield.Fields.Bandwidth = 0;
 		Transmitter.TxPreambleCount = 4;
@@ -251,6 +251,7 @@ int main(int arg_count, char* arg_values[]) {
 	printf("Total packets generated: %i\r\n", packet_count);
 	printf("Zero-length packet count: %i\r\n", zero_length_count);
 	printf("Data packet count: %i\r\n", packet_count-zero_length_count);
+	printf("OFDM SYNCFIELD MASK %x\r\n", OFDM_SYNCFIELD_MASK);
 
 	printf("Done.\r\n");
 	return(0);

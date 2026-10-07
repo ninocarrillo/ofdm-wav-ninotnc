@@ -63,15 +63,8 @@ typedef enum ofdm_bw_e	{
 	OFDM_BW_FM_EWB
 } OFDM_BW;
 
-// FEC definitions
-typedef enum ofdm_fec_e {
-	OFDM_FEC_NONE=0,				// no FEC
-	OFDM_FEC_CCITTCRC16,			// CCITT CRC 16
-	OFDM_FEC_TRELLIS				// trellis coding
-} OFDM_FEC;
 #define OFDM_CONST_MASK 0x7
 
-#define OFDM_SYNCWORD_DATA_N 26
 
 #define OFDM_BUF2_N ((OFDM_CP_N<<1) + 1)
 #define OFDM_BUF_N ((OFDM_FFT_N + OFDM_BUF2_N) + ((OFDM_FFT_N + OFDM_BUF2_N)>>1))
@@ -109,7 +102,9 @@ typedef enum ofdm_fec_e {
 
 #define OFDM_MAX_SYMBOL_DATA (OFDM_FFT_N>>1) // Maximum number of bytes carried in a single symbol
 
-#define OFDM_SYNCFIELD_MASK 0x3FFFFF00;
+#define OFDM_SYNCWORD_DATA_N 26
+#define OFDM_SYNCWORD_CRC_N 8
+#define OFDM_SYNCFIELD_MASK (((1<<(OFDM_SYNCWORD_DATA_N-OFDM_SYNCWORD_CRC_N))-1)<<OFDM_SYNCWORD_CRC_N)
 
 #define OFDM_SC_P1_CUTOFF 20
 
@@ -125,8 +120,7 @@ typedef union {
 		uint32_t RandomizerIndex  :2;
 		uint32_t Constellation    :3;
 		uint32_t PayloadByteCount :10;
-		uint32_t Bandwidth        :1;
-		uint32_t Unused           :5;
+		uint32_t Bandwidth        :2;
 	} Fields;
 	uint32_t Word;
 } Syncfield_union;
