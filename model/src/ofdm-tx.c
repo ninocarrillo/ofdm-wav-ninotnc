@@ -64,15 +64,15 @@ int main(int arg_count, char* arg_values[]) {
 	
 	if (arg_count < 6) {
 		printf("Not enough arguments.\r\n");
-		printf("Usage:\r\nofdm-tx.exe <input text file> <output wav file> <constellation> <bandwidth> <block code>\r\n");
+		printf("Usage:\r\nofdm-tx.exe <input text file> <output wav file> <constellation> <block code> < trellis code>\r\n");
 		return(-1);
 	}
 
 	int const_arg = atoi(arg_values[3]);
 
-	int bandwidth_arg = atoi(arg_values[4]);
+	int block_code_arg = atoi(arg_values[4]);
 
-	int block_code_arg = atoi(arg_values[5]);
+	int trellis_code_arg = atoi(arg_values[5]);
 	
 	FILE *input_file;
 	input_file = fopen(arg_values[1], "r");
@@ -149,11 +149,11 @@ int main(int arg_count, char* arg_values[]) {
 		Transmitter.BasebandSamples = baseband_samples; // Put pointer to baseband samples in the Transmitter struct
 		Transmitter.Randomizer = OFDM_RAND_SEED;
 		Transmitter.Syncfield.Fields.Constellation = const_arg & 7;
-		Transmitter.Syncfield.Fields.Bandwidth = bandwidth_arg & 3;
 		Transmitter.Syncfield.Fields.BlockCode = block_code_arg & 1;
 		Transmitter.Syncfield.Fields.TrellisCode = 0;
 		Transmitter.Syncfield.Fields.Unused = 0;
 		Transmitter.Syncfield.Fields.RandomizerIndex++;
+		Transmitter.Syncfield.Fields.Bandwidth = 0;
 		Transmitter.TxPreambleCount = 4;
 
 		// Count how many characters this line contains

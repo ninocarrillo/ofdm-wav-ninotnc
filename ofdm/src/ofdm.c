@@ -32,14 +32,14 @@ const int OFDM_Pilot_Bin_Inv[9] = {
 const int16_t OFDM_Pilot_N[4] = { 3, 5, 7, 9};
 
 const int16_t OFDM_Start_Bins[4] = { \
-/* BW 0 328.125 Hz */    14, \
+/* BW 0 468.75 Hz */    20, \
 /* BW 1 328.125 Hz */    14, \
 /* BW 2 187.500 Hz */    8, \
 /* BW 3 187.500 Hz */    8 \
 };
 
 const int16_t OFDM_End_Bins[4] = { \
-/* BW 0 2953.125 Hz */   126, \
+/* BW 0 2906.25 Hz */   124, \
 /* BW 1 3984.275 Hz */   170, \
 /* BW 2 5953.125 Hz */   254, \
 /* BW 3 7968.75  Hz */   340 \

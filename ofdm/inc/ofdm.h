@@ -71,7 +71,7 @@ typedef enum ofdm_fec_e {
 } OFDM_FEC;
 #define OFDM_CONST_MASK 0x7
 
-#define OFDM_SYNCWORD_DATA_N 28
+#define OFDM_SYNCWORD_DATA_N 26
 
 #define OFDM_BUF2_N ((OFDM_CP_N<<1) + 1)
 #define OFDM_BUF_N ((OFDM_FFT_N + OFDM_BUF2_N) + ((OFDM_FFT_N + OFDM_BUF2_N)>>1))
@@ -120,12 +120,13 @@ typedef union {
 	struct {
 		uint32_t CRC8             :8;
 		uint32_t TrellisCode      :1;
-		uint32_t Bandwidth        :2;
+		uint32_t BlockCode        :1;
+		uint32_t PerfTrailer      :1;
 		uint32_t RandomizerIndex  :2;
 		uint32_t Constellation    :3;
-		uint32_t BlockCode        :1;
-		uint32_t PayloadByteCount :11;
-		uint32_t Unused           :4;
+		uint32_t PayloadByteCount :10;
+		uint32_t Bandwidth        :1;
+		uint32_t Unused           :5;
 	} Fields;
 	uint32_t Word;
 } Syncfield_union;
