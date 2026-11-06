@@ -90,11 +90,11 @@ int main(int arg_count, char* arg_values[]) {
 						OFDMSyncSVG(&Receiver, &OFDM_Dev, sync_count);
 						
 						if (Receiver.ValidSyncCRC > 0) {
-							printf("Valid Sync detected. Delay: %i, Indicated offset: %li\r\n", Receiver.Delay, absolute_offset-(long int)Receiver.Delay);
-							printf("**** Constellation: %i\r\n", Receiver.Syncfield.Fields.Constellation);
-							printf("**** Randomizer %i\r\n", Receiver.Syncfield.Fields.RandomizerIndex);
-							printf("**** Payload Byte Count: %i\r\n", Receiver.Syncfield.Fields.PayloadByteCount);
-							printf("**** Block Code: %i\r\n", Receiver.Syncfield.Fields.BlockCode);
+							printf("Valid Sync detected. Delay: %i\r\n", Receiver.Delay);
+							printf("**** Syncfield Constellation: %i\r\n", Receiver.Syncfield.Fields.Constellation);
+							printf("**** Syncfeild Randomizer %i\r\n", Receiver.Syncfield.Fields.RandomizerIndex);
+							printf("**** Syncfield Payload Byte Count: %i\r\n", Receiver.Syncfield.Fields.PayloadByteCount);
+							printf("**** Syncfield FEC: %i\r\n", Receiver.Syncfield.Fields.BlockCode);
 							printf("Signal E %i\r\n", Receiver.SignalE);
 							printf("Noise E %i\r\n", Receiver.NoiseE);
 							printf("Est SNR: %i\r\n", CalcDecibelEnergy(Receiver.SignalE, Receiver.NoiseE));
@@ -103,6 +103,12 @@ int main(int arg_count, char* arg_values[]) {
 							printf("******* Invalid Sync detected. Delay: %i, Indicated offset: %li\r\n", Receiver.Delay, absolute_offset-(long int)Receiver.Delay);
 						}
 						if (Receiver.Syncfield.Fields.PayloadByteCount > 0) {
+                                // Adjust modulated byte count for Reed Solomon parity overhead if applicable.
+                                if (Receiver.Syncfield.Fields.BlockCode) {
+                                    Receiver.BytesRemaining = EDACGetExtendedN(Receiver.BytesRemaining, OFDM_BLOCK_CODE_MAX, OFDM_BLOCK_CODE_PARITY);
+                                }
+                                // Adjust modulated byte count for CRC overhead.
+                                Receiver.BytesRemaining += 2;
 							// Only change to receive state if there are data bytes to follow.
 							Receiver.DemodWordBitCount = 0;
 							Receiver.State = OFDM_RX_DATA;
