@@ -1506,28 +1506,21 @@ int OFDMDemodulate2(OFDM_Rx_struct *rx) {
     return byte_index;
 }
 
+
 int16_t OFDMDetectPresync(OFDM_Rx_struct *rx) {
     RFFT(rx->FFTBuf, OFDM_FFT_STAGE_N);
     // Calculate the energy in bins 65 and 67
-    int i = 65<<1;
-    int32_t bin_65_e = ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
+    int i = OFDM_PREAMBLE_BIN_1<<1;
+    int32_t tone_1_e = ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
     i++;
-    bin_65_e += ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
-    i = 67<<1;
-    int32_t bin_67_e = ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
+    tone_1_e += ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
+    i = OFDM_PREAMBLE_BIN_2<<1;
+    int32_t tone_2_e = ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
     i++;
-    bin_67_e += ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
-    // Calculate the energy in the 16 bins on either side of the signal bins
+    tone_2_e += ((int32_t)rx->FFTBuf[i] * (int32_t)rx->FFTBuf[i])>>15;
     int32_t noise_e = 0;
-    int j = 68<<1;
-    for (int i = 0; i < 16; i++) {
-        noise_e += ((int32_t)rx->FFTBuf[j] * (int32_t)rx->FFTBuf[j])>>15;
-        j++;
-        noise_e += ((int32_t)rx->FFTBuf[j] * (int32_t)rx->FFTBuf[j])>>15;
-        j++;
-    }
-    j = (64-16) << 1;
-    for (int i = 0; i < 16; i++) {
+    int j = (OFDM_PREAMBLE_BIN_1 + 1)<<1;
+    for (int i = 0; i < 32; i++) {
         noise_e += ((int32_t)rx->FFTBuf[j] * (int32_t)rx->FFTBuf[j])>>15;
         j++;
         noise_e += ((int32_t)rx->FFTBuf[j] * (int32_t)rx->FFTBuf[j])>>15;
@@ -1537,12 +1530,12 @@ int16_t OFDMDetectPresync(OFDM_Rx_struct *rx) {
     if (noise_e <1) {
         noise_e = 1;
     }
-    bin_65_e = CalcDecibelEnergy(bin_65_e, noise_e);
-    bin_67_e = CalcDecibelEnergy(bin_67_e, noise_e);
-    if (bin_67_e > bin_65_e) {
-        return (int16_t)bin_65_e;
+    tone_1_e = CalcDecibelEnergy(tone_1_e, noise_e);
+    tone_2_e = CalcDecibelEnergy(tone_2_e, noise_e);
+    if (tone_2_e > tone_1_e) {
+        return (int16_t)tone_1_e;
     } else {
-        return (int16_t)bin_67_e;
+        return (int16_t)tone_2_e;
     }
 }
 
