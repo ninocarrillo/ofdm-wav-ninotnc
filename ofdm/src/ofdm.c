@@ -769,14 +769,14 @@ int OFDMBuildDataSymbol1024(OFDM_Tx_struct *tx) {
                     // Place the new data in the appropriate position by shifting left as required.
                     int16_t new_byte = ((int16_t)tx->InputData[tx->PayloadByteIndex++]) & 0xFF;
                     // Apply randomizer to this new byte of data
-                    new_byte = new_byte ^ StepRandomizer(&tx->Randomizer, tx->Syncfield.Fields.RandomizerIndex);
+                    new_byte = new_byte ^ StepRandomizer(&tx->Randomizer, tx->RandomizerIndex);
                     //printf("new byte %4x, bit count: %i\r\n", new_byte, tx->WordBits);
                     new_byte <<= (8 - tx->WordBits);
 					tx->WorkingWord |= new_byte;
 					tx->WordBits += 8;
 				} else {
                     // No data remains, insert pseudorandom data
-					tx->WorkingWord |= StepRandomizer(&tx->Randomizer, tx->Syncfield.Fields.RandomizerIndex) << (8 - tx->WordBits);
+					tx->WorkingWord |= StepRandomizer(&tx->Randomizer, tx->RandomizerIndex) << (8 - tx->WordBits);
 					tx->WordBits += 8;
 				}
 			}

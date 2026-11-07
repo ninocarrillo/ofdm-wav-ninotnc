@@ -146,13 +146,14 @@ int main(int arg_count, char* arg_values[]) {
 		
 
 		// Generate sync symbol
+		Transmitter.RandomizerIndex = (Transmitter.RandomizerIndex++) & OFDM_SYNCFIELD_RANDOMIZER_MASK;
 		Transmitter.BasebandSamples = baseband_samples; // Put pointer to baseband samples in the Transmitter struct
 		Transmitter.Randomizer = OFDM_RAND_SEED;
 		Transmitter.Syncfield.Word = 0;
 		Transmitter.Syncfield.Fields.Constellation = const_arg & 7;
 		Transmitter.Syncfield.Fields.FEC2 = block_code_arg & 1;
 		Transmitter.Syncfield.Fields.TrellisCode = 0;
-		Transmitter.Syncfield.Fields.RandomizerIndex++;
+		Transmitter.Syncfield.Fields.RandomizerIndex = Transmitter.RandomizerIndex;
 		Transmitter.Syncfield.Fields.Bandwidth = 0;
 		Transmitter.TxPreambleCount = 4;
 
