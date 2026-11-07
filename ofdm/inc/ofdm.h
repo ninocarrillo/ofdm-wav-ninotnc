@@ -125,7 +125,7 @@ typedef enum ofdm_bw_e	{
 typedef union {
 	struct {
 		uint32_t CRC8             :8;
-		uint32_t TrellisCode      :1;
+		uint32_t FEC1      :1;
 		uint32_t FEC2        :1;
 		uint32_t PerfTrailer      :1;
 		uint32_t RandomizerIndex  :2;
@@ -205,8 +205,8 @@ typedef struct {
 
 
 uint16_t StepRandomizer(uint16_t *, int );
-int OFDMBuildSyncSymbol1024(OFDM_Tx_struct *);
-int OFDMBuildDataSymbol1024(OFDM_Tx_struct *);
+int OFDMBuildSyncSymbol(OFDM_Tx_struct *);
+int OFDMBuildDataSymbol(OFDM_Tx_struct *);
 void OFDMRxInit(OFDM_Rx_struct *);
 int OFDMSyncSearch(OFDM_Rx_struct *, int16_t);
 void OFDMProcessSyncSymbol(OFDM_Rx_struct *);

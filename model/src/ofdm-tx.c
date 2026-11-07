@@ -152,7 +152,7 @@ int main(int arg_count, char* arg_values[]) {
 		Transmitter.Syncfield.Word = 0;
 		Transmitter.Syncfield.Fields.Constellation = const_arg & 7;
 		Transmitter.Syncfield.Fields.FEC2 = block_code_arg & 1;
-		Transmitter.Syncfield.Fields.TrellisCode = 0;
+		Transmitter.Syncfield.Fields.FEC1 = 0;
 		Transmitter.Syncfield.Fields.RandomizerIndex = Transmitter.RandomizerIndex;
 		Transmitter.Syncfield.Fields.Bandwidth = 0;
 		Transmitter.TxPreambleCount = 4;
@@ -177,7 +177,7 @@ int main(int arg_count, char* arg_values[]) {
 		Transmitter.Syncfield.Fields.PayloadByteCount = packet_payload_count;		
 
 		while (Transmitter.TxPreambleCount > 0) {
-			int baseband_sample_count = OFDMBuildSyncSymbol1024(&Transmitter);
+			int baseband_sample_count = OFDMBuildSyncSymbol(&Transmitter);
 
 			int16_t avg = calc_avg_amplitude(baseband_samples, baseband_sample_count);
 			int16_t peak = calc_peak_amplitude(baseband_samples, baseband_sample_count);
@@ -206,7 +206,7 @@ int main(int arg_count, char* arg_values[]) {
 		while (Transmitter.PayloadBits > 0) {
 			printf("Building Data Symbol. Index: %i, Count: %i, Bits Remaining: %i\r\n", Transmitter.PayloadByteIndex, packet_payload_count, Transmitter.PayloadBits);
 
-			int baseband_sample_count = OFDMBuildDataSymbol1024(&Transmitter);
+			int baseband_sample_count = OFDMBuildDataSymbol(&Transmitter);
 
 
 			int16_t avg = calc_avg_amplitude(baseband_samples, baseband_sample_count);

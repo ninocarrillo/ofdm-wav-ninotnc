@@ -725,7 +725,7 @@ void normalize_ifft_bw(OFDM_Tx_struct *tx) {
   * @param tx pointer to transmitter memory structure
   * @retval number of time domain samples available in tx->BasebandSamples buffer
   */
-int OFDMBuildDataSymbol1024(OFDM_Tx_struct *tx) {
+int OFDMBuildDataSymbol(OFDM_Tx_struct *tx) {
     // Clear baseband sample buffer memory
     for (int i = 0; i < OFDM_FFT_N+OFDM_CP_N; i++) {
         tx->BasebandSamples[i] = 0;
@@ -735,7 +735,7 @@ int OFDMBuildDataSymbol1024(OFDM_Tx_struct *tx) {
     // Calculate how many bits can be placed in each subcarrier based on 
     // constellation complexity and Trellis Coding flag
     int effective_bits_per_symbol = (int)tx->Syncfield.Fields.Constellation + 1;
-    if (tx->Syncfield.Fields.TrellisCode) {
+    if (tx->Syncfield.Fields.FEC1) {
         if (tx->Syncfield.Fields.Constellation > 0) {
             effective_bits_per_symbol--;
         }
@@ -763,7 +763,7 @@ int OFDMBuildDataSymbol1024(OFDM_Tx_struct *tx) {
 			// Otherwise put data in these carriers.
             // First we need to ensure there are enough data bits in the WorkingWord to modulate one subcarrier symbol
 			while (tx->WordBits < OFDM_CONST_MAX_BITS) {
-				if (tx->PayloadByteIndex < tx->Syncfield.Fields.PayloadByteCount) {
+				if (tx->PayloadByteIndex < tx->ExtendedPayloadByteCount) {
 					// Another byte remains.
                     // All the remaining bits (if any) in tx->WorkingWord are on the left side (MSB)
                     // Place the new data in the appropriate position by shifting left as required.
@@ -782,7 +782,7 @@ int OFDMBuildDataSymbol1024(OFDM_Tx_struct *tx) {
 			}
             //printf("working word: %4x, bit count: %i\r\n", tx->WorkingWord, tx->WordBits);
             //printf("mod details:\r\n");
-            OFDMModulate(&offset_buffer[offset], tx->WorkingWord, tx->Syncfield.Fields.Constellation, tx->Syncfield.Fields.TrellisCode);
+            OFDMModulate(&offset_buffer[offset], tx->WorkingWord, tx->Syncfield.Fields.Constellation, tx->Syncfield.Fields.FEC1);
             // bits per subcarrier for selected waveform is constellation+1
 			tx->WorkingWord<<=effective_bits_per_symbol;
 			tx->WordBits-=effective_bits_per_symbol;
@@ -834,7 +834,7 @@ void OFDMCalcSyncCRC(uint32_t *syncfield) {
   * @param tx pointer to transmitter memory structure
   * @retval number of time domain samples available in tx->BasebandSamples buffer
   */
-int OFDMBuildSyncSymbol1024(OFDM_Tx_struct *tx) {
+int OFDMBuildSyncSymbol(OFDM_Tx_struct *tx) {
    if (tx->TxPreambleCount > 1) {
       tx->TxPreambleCount--;
       for (int i = 0; i < OFDM_PREAMBLE_SAMPLE_COUNT; i++) {
@@ -944,14 +944,65 @@ void OFDMRxInit(OFDM_Rx_struct *rx) {
     GenLPFIR2(rx->SyncLPF, OFDM_SC_P1_CUTOFF, OFDM_FFT_SAMPLE_RATE, rx->CircN2, 1);
 }
 
+void IdleSC(OFDM_Rx_struct *rx) {
+    int norm_shift = (OFDM_FFT_STAGE_N+OFDM_SC_REG_BITS)-1;
+    // Schmidl-Cox sync detection is founded on autocorrelation of the signal series
+    // on a time-delay of 1/2 symbol. The sync symbol is intentionally 2-periodic, so
+    // it repeats once in its symbol time.
+    // In an integer-math implementation, special attention needs to be paid to the 
+    // scaling factor to prevent saturation of the result. Scaling factor (norm_shift) 
+    // is related to the signal amplitude at this point (set by external AGC or internal
+    // software steps prior to this point), as well as the number of MAC operations performed
+    // for each value of p1. 
 
+
+    // Calculate a new sample-by-sample value of P1
+    // First, calculate the sample index 1/2 symbol in history
+    int j = rx->CircIndex1 - (OFDM_FFT_N>>1);
+    if (j < 0) {
+        j += rx->CircN1;
+    }
+    // Update the P1 circular buffer index
+    rx->P1Index++;
+    if (rx->P1Index >= (OFDM_FFT_N>>1)) {
+        rx->P1Index = 0;
+    }
+    // Drop off the last partial P1 value
+    rx->P1 -= rx->P1CircBuf[rx->P1Index];
+    // Calculate a new partial P1 value
+    rx->P1CircBuf[rx->P1Index] = ((int32_t)rx->CircBuf1[rx->CircIndex1] * (int32_t)rx->CircBuf1[j]) >> norm_shift;
+    // Add new partial value to P1 metric accumulator
+    rx->P1 += rx->P1CircBuf[rx->P1Index];
+
+    // Calculate a new sample-by-sample value of E
+    // Drop off the last partial E value
+    rx->E -= rx->ECircBuf[rx->P1Index];
+    // Calculate a new partial E value
+    rx->ECircBuf[rx->P1Index] = ((int32_t)rx->CircBuf1[rx->CircIndex1] * (int32_t)rx->CircBuf1[rx->CircIndex1]) >> norm_shift;
+    // Add new partial value to E metric accumulator
+    rx->E += rx->ECircBuf[rx->P1Index];
+
+
+
+    // Apply low-pass filter to P1
+    rx->CircIndex2++;
+    if (rx->CircIndex2 >= rx->CircN2) {
+        rx->CircIndex2 = 0;
+    }
+    rx->CircBuf2[rx->CircIndex2] = rx->P1;
+    rx->P1MA = 0;
+    rx->SyncArm = 0;
+    rx->SyncDelay = 0;
+    rx->SyncArmEnergy = 0;
+
+ }
 
 /**
   * @brief Perform modified Schmidl-Cox sync detection upon samples in circular buffer
   * @param rx pointer to receiver memory structure
   * @retval SyncResult sample count from current circular buffer index to sync detect point in history (0 if none)
   */
-int16_t DetectSC_5(OFDM_Rx_struct *rx) {
+int16_t DetectSC_6(OFDM_Rx_struct *rx) {
     int norm_shift = (OFDM_FFT_STAGE_N+OFDM_SC_REG_BITS)-1;
     // Schmidl-Cox sync detection is founded on autocorrelation of the signal series
     // on a time-delay of 1/2 symbol. The sync symbol is intentionally 2-periodic, so
@@ -1002,14 +1053,17 @@ int16_t DetectSC_5(OFDM_Rx_struct *rx) {
 
     // Sync state machine
     rx->SyncResult = 0;
+
     switch (rx->SyncArm) {
     case 1:
-        if (rx->SyncDelay >= OFDM_BUF_N) {
+        if (rx->SyncDelay > OFDM_BUF_N>>1) {
             // Abort sync search without result
             rx->SyncArm = 0;
-        }
-        // Check for reasons to end peak search.
-        if (rx->P1MA < rx->SyncArmEnergy>>1) { // First, P1MA has dropped to less than half the energy at time of SyncArm
+            rx->SyncDelay = 0;
+        } else if (rx->P1MA < 0) {
+            rx->SyncArm = 0;
+            rx->SyncDelay = 0;
+        } else if (rx->P1MA < rx->SyncArmEnergy>>1) { // First, P1MA has dropped to less than half the energy at time of SyncArm
             rx->SyncArm = 0;
             rx->Delay = OFDM_FFT_N + rx->SyncDelay + (OFDM_BUF2_N>>1);
             rx->SyncResult = 1;
@@ -1024,9 +1078,9 @@ int16_t DetectSC_5(OFDM_Rx_struct *rx) {
     case 0:
     default:
         rx->SyncInhibitTimer++;
-        if (rx->SyncInhibitTimer > (OFDM_FFT_N>>2)) {
-            rx->SyncInhibitTimer = OFDM_FFT_N>>2;
-            if (rx->P1MA > rx->E>>1) {
+        if (rx->SyncInhibitTimer > OFDM_FFT_N>>1) {
+            rx->SyncInhibitTimer = OFDM_FFT_N>>1;
+            if ((rx->P1MA > rx->E>>1) && (rx->E > OFDM_SC_ARM_E_THRESH)) {
                 rx->SyncArm = 1;
                 rx->SyncArmEnergy = rx->E;
                 rx->P1Max = 0;
@@ -1555,6 +1609,7 @@ int OFDMSyncSearch(OFDM_Rx_struct *rx, int16_t sample) {
     rx->CircBuf1[rx->CircIndex1] = sample;
     // Check for preamble
     rx->PresyncIndex++;
+    rx->PresyncDetectFlag = 0;
     if (rx->PresyncIndex >= OFDM_FFT_N) {
         rx->PresyncIndex = 0;
         int copy_index = rx->CircIndex1 - OFDM_FFT_N;
@@ -1565,14 +1620,50 @@ int OFDMSyncSearch(OFDM_Rx_struct *rx, int16_t sample) {
             rx->FFTBuf[i] = rx->CircBuf1[copy_index++]>>OFDM_FFT_SHIFT;
         }
         rx->PresyncSNR = OFDMDetectPresync(rx);
-        if (rx->PresyncSNR > 6) {
+        if (rx->PresyncSNR >= OFDM_PRESYNC_MIN_SNR) {
             rx->PresyncDetectFlag = 1;
         }
     }
     // Perform correlation
-    int sync_flag = DetectSC_5(rx);
+    int sync_flag = DetectSC_6(rx);
 
     return sync_flag;
+}
+
+/**
+  * @brief Add a time domain sample to the circular buffer and search for presync
+  * @param rx pointer to receiver memory structure
+  * @param sample real-valued time domain sample
+  * @retval PresyncDetectFlag nonzero if presync detected
+  */
+int OFDMPreSyncSearch(OFDM_Rx_struct *rx, int16_t sample) {
+    // Advance the circular buffer index.
+    rx->CircIndex1++;
+    if (rx->CircIndex1 >= rx->CircN1) {
+        rx->CircIndex1 = 0;
+    }
+    // Place this sample in circular buffer
+    rx->CircBuf1[rx->CircIndex1] = sample;
+    // Check for preamble
+    rx->PresyncIndex++;
+    rx->PresyncDetectFlag = 0;
+    if (rx->PresyncIndex >= OFDM_FFT_N) {
+        rx->PresyncIndex = 0;
+        int copy_index = rx->CircIndex1 - OFDM_FFT_N;
+        if (copy_index < 0) {
+            copy_index += rx->CircN1;
+        }
+        for (int i = 0; i < OFDM_FFT_N; i++) {
+            rx->FFTBuf[i] = rx->CircBuf1[copy_index++]>>OFDM_FFT_SHIFT;
+        }
+        rx->PresyncSNR = OFDMDetectPresync(rx);
+        if (rx->PresyncSNR >= OFDM_PRESYNC_MIN_SNR) {
+            rx->PresyncDetectFlag = 1;
+        }
+    }
+    IdleSC(rx);
+
+    return rx->PresyncDetectFlag;
 }
 
 /**
@@ -1700,4 +1791,3 @@ void OFDMProcessSyncSymbol(OFDM_Rx_struct *rx) {
     }
     OFDMCalcSNR(rx);
 }
-
