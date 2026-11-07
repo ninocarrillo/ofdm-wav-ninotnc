@@ -159,6 +159,7 @@ int main(int arg_count, char* arg_values[]) {
 
 		// Count how many characters this line contains
 		int packet_payload_count = txtCountChars(input_data);
+		Transmitter.Syncfield.Fields.PayloadByteCount = packet_payload_count;
 		
 		// Only add a packet CRC if the payload count is nonzero. Zero payload packets are only a sync symbol.
 		if (packet_payload_count > 0) {
@@ -173,8 +174,7 @@ int main(int arg_count, char* arg_values[]) {
 			zero_length_count++;
 			printf("Zero-length packet, sync symbol only.\r\n");
 		}
-
-		Transmitter.Syncfield.Fields.PayloadByteCount = packet_payload_count;		
+	
 
 		while (Transmitter.TxPreambleCount > 0) {
 			int baseband_sample_count = OFDMBuildSyncSymbol(&Transmitter);
@@ -196,11 +196,12 @@ int main(int arg_count, char* arg_values[]) {
 			WavHdrAddSamples(&wav_header, baseband_sample_count);
 		}
 
+		Transmitter.ExtendedPayloadByteCount = packet_payload_count;
 		// Add the data symbols after this sync symbol. Zero-length payloads contain zero data symbols.
 		Transmitter.PayloadByteIndex = 0;
 		Transmitter.WorkingWord = 0;
 		Transmitter.WordBits = 0;
-		Transmitter.PayloadBits = packet_payload_count * 8;
+		Transmitter.PayloadBits = Transmitter.ExtendedPayloadByteCount * 8;
 		Transmitter.BasebandSamples = baseband_samples;
 		Transmitter.InputData = input_data;
 		while (Transmitter.PayloadBits > 0) {
