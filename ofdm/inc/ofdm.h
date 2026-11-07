@@ -125,7 +125,7 @@ typedef enum ofdm_bw_e	{
 typedef union {
 	struct {
 		uint32_t CRC8             :8;
-		uint32_t FEC2             :1;
+		uint32_t FEC              :1;
 		uint32_t PerfTrailer      :1;
 		uint32_t RandomizerIndex  :OFDM_SYNCFIELD_RANDOMIZER_BITS;
 		uint32_t Constellation    :3;
