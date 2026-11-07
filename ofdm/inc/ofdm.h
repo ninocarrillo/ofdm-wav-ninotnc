@@ -105,7 +105,7 @@ typedef enum ofdm_bw_e	{
 
 #define OFDM_MAX_SYMBOL_DATA (OFDM_FFT_N>>1) // Maximum number of bytes carried in a single symbol
 
-#define OFDM_SYNCWORD_DATA_N 26
+#define OFDM_SYNCWORD_DATA_N 24
 #define OFDM_SYNCWORD_CRC_N 8
 #define OFDM_SYNCFIELD_MASK (((1<<(OFDM_SYNCWORD_DATA_N-OFDM_SYNCWORD_CRC_N))-1)<<OFDM_SYNCWORD_CRC_N)
 
