@@ -143,9 +143,11 @@ typedef struct {
 	int16_t *BasebandSamples;
 	uint8_t *InputData;
 	uint16_t WorkingWord;
+    int RandomizerIndex;
 	int WordBits;
 	int PayloadBits;
     int TxPreambleCount;
+    int ExtendedPayloadByteCount;
     int32_t NCO1Phase;
     int32_t NCO2Phase;
 } OFDM_Tx_struct;
