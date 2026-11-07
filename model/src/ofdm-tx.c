@@ -152,7 +152,6 @@ int main(int arg_count, char* arg_values[]) {
 		Transmitter.Syncfield.Word = 0;
 		Transmitter.Syncfield.Fields.Constellation = const_arg & 7;
 		Transmitter.Syncfield.Fields.FEC2 = block_code_arg & 1;
-		Transmitter.Syncfield.Fields.FEC1 = 0;
 		Transmitter.Syncfield.Fields.RandomizerIndex = Transmitter.RandomizerIndex;
 		Transmitter.Syncfield.Fields.Bandwidth = 0;
 		Transmitter.TxPreambleCount = 4;

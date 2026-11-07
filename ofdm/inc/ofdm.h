@@ -11,7 +11,7 @@
 #define OFDM_CP_N 64
 #define OFDM_FFT_N 1024
 #define OFDM_FFT_STAGE_N 10
-#define OFDM_SC_REG_BITS 13
+#define OFDM_SC_REG_BITS 12
 #define OFDM_FFT_SAMPLE_RATE 24000
 #define OFDM_SYS_SAMPLE_RATE 24000
 #define OFDM_BIN_HZ ((double)OFDM_FFT_SAMPLE_RATE / (double)OFDM_FFT_N)
@@ -125,12 +125,11 @@ typedef enum ofdm_bw_e	{
 typedef union {
 	struct {
 		uint32_t CRC8             :8;
-		uint32_t FEC1      :1;
-		uint32_t FEC2        :1;
+		uint32_t FEC2             :1;
 		uint32_t PerfTrailer      :1;
-		uint32_t RandomizerIndex  :2;
+		uint32_t RandomizerIndex  :OFDM_SYNCFIELD_RANDOMIZER_BITS;
 		uint32_t Constellation    :3;
-		uint32_t PayloadByteCount :10;
+		uint32_t PayloadByteCount :9;
 		uint32_t Bandwidth        :2;
 	} Fields;
 	uint32_t Word;

@@ -32,14 +32,14 @@ const int OFDM_Pilot_Bin_Inv[9] = {
 const int16_t OFDM_Pilot_N[4] = { 3, 5, 7, 9};
 
 const int16_t OFDM_Start_Bins[4] = { \
-/* BW 0 468.75 Hz */    20, \
+/* BW 0 468.75 Hz */    18, \
 /* BW 1 328.125 Hz */    14, \
 /* BW 2 187.500 Hz */    8, \
 /* BW 3 187.500 Hz */    8 \
 };
 
 const int16_t OFDM_End_Bins[4] = { \
-/* BW 0 2906.25 Hz */   124, \
+/* BW 0 2906.25 Hz */   114, \
 /* BW 1 3984.275 Hz */   170, \
 /* BW 2 5953.125 Hz */   254, \
 /* BW 3 7968.75  Hz */   340 \
@@ -637,7 +637,7 @@ const int16_t OFDM_256QAM_MAP[512] = { \
   * @param trellis if nonzero enables trellis coding
   * @retval none
   */
-void OFDMModulate(int16_t *symbol_buffer, uint16_t data, int constellation, int trellis) {
+void OFDMModulate(int16_t *symbol_buffer, uint16_t data, int constellation) {
 
     switch (constellation & OFDM_CONST_MASK) {
     case OFDM_CONST_BPSK:
@@ -735,11 +735,6 @@ int OFDMBuildDataSymbol(OFDM_Tx_struct *tx) {
     // Calculate how many bits can be placed in each subcarrier based on 
     // constellation complexity and Trellis Coding flag
     int effective_bits_per_symbol = (int)tx->Syncfield.Fields.Constellation + 1;
-    if (tx->Syncfield.Fields.FEC1) {
-        if (tx->Syncfield.Fields.Constellation > 0) {
-            effective_bits_per_symbol--;
-        }
-    }
     // Allocate memory for decomposing the input bytes into 
     // constelation-sized bit chunks
     // Calculate the number of occupied subcarriers
@@ -782,7 +777,7 @@ int OFDMBuildDataSymbol(OFDM_Tx_struct *tx) {
 			}
             //printf("working word: %4x, bit count: %i\r\n", tx->WorkingWord, tx->WordBits);
             //printf("mod details:\r\n");
-            OFDMModulate(&offset_buffer[offset], tx->WorkingWord, tx->Syncfield.Fields.Constellation, tx->Syncfield.Fields.FEC1);
+            OFDMModulate(&offset_buffer[offset], tx->WorkingWord, tx->Syncfield.Fields.Constellation);
             // bits per subcarrier for selected waveform is constellation+1
 			tx->WorkingWord<<=effective_bits_per_symbol;
 			tx->WordBits-=effective_bits_per_symbol;
