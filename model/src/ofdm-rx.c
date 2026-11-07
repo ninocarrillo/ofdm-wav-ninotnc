@@ -94,7 +94,7 @@ int main(int arg_count, char* arg_values[]) {
 							printf("**** Syncfield Constellation: %i\r\n", Receiver.Syncfield.Fields.Constellation);
 							printf("**** Syncfeild Randomizer %i\r\n", Receiver.Syncfield.Fields.RandomizerIndex);
 							printf("**** Syncfield Payload Byte Count: %i\r\n", Receiver.Syncfield.Fields.PayloadByteCount);
-							printf("**** Syncfield FEC: %i\r\n", Receiver.Syncfield.Fields.BlockCode);
+							printf("**** Syncfield FEC: %i\r\n", Receiver.Syncfield.Fields.FEC2);
 							printf("Signal E %i\r\n", Receiver.SignalE);
 							printf("Noise E %i\r\n", Receiver.NoiseE);
 							printf("Est SNR: %i\r\n", CalcDecibelEnergy(Receiver.SignalE, Receiver.NoiseE));
@@ -104,7 +104,7 @@ int main(int arg_count, char* arg_values[]) {
 						}
 						if (Receiver.Syncfield.Fields.PayloadByteCount > 0) {
                                 // Adjust modulated byte count for Reed Solomon parity overhead if applicable.
-                                if (Receiver.Syncfield.Fields.BlockCode) {
+                                if (Receiver.Syncfield.Fields.FEC2) {
                                     Receiver.BytesRemaining = EDACGetExtendedN(Receiver.BytesRemaining, OFDM_BLOCK_CODE_MAX, OFDM_BLOCK_CODE_PARITY);
                                 }
                                 // Adjust modulated byte count for CRC overhead.
@@ -132,7 +132,7 @@ int main(int arg_count, char* arg_values[]) {
 					if (Receiver.BytesRemaining <= 0) {
 						// Calculate CRC for payload and put it at the end
 						if (packet_payload_count > 0) {
-							if (Receiver.Syncfield.Fields.BlockCode) {
+							if (Receiver.Syncfield.Fields.FEC2) {
 								packet_payload_count = EDACDecodeRS2(output_data, packet_payload_count, OFDM_BLOCK_CODE_MAX, OFDM_BLOCK_CODE_PARITY);
 							}
 							packet_payload_count = EDACCheckCCITT16(output_data, packet_payload_count);

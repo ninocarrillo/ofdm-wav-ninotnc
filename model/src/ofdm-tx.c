@@ -150,7 +150,7 @@ int main(int arg_count, char* arg_values[]) {
 		Transmitter.Randomizer = OFDM_RAND_SEED;
 		Transmitter.Syncfield.Word = 0;
 		Transmitter.Syncfield.Fields.Constellation = const_arg & 7;
-		Transmitter.Syncfield.Fields.BlockCode = block_code_arg & 1;
+		Transmitter.Syncfield.Fields.FEC2 = block_code_arg & 1;
 		Transmitter.Syncfield.Fields.TrellisCode = 0;
 		Transmitter.Syncfield.Fields.RandomizerIndex++;
 		Transmitter.Syncfield.Fields.Bandwidth = 0;
@@ -164,7 +164,7 @@ int main(int arg_count, char* arg_values[]) {
 			// Calculate CRC for payload and put it at the end
             packet_payload_count = EDACAppendCCITT16(input_data, packet_payload_count);
             printf("Packet Payload Count: %i, Packet CRC: %04x\r\n", packet_payload_count, EDACGetCCITT16(input_data, packet_count));
-            if (Transmitter.Syncfield.Fields.BlockCode) {
+            if (Transmitter.Syncfield.Fields.FEC2) {
             	packet_payload_count = EDACEncodeRS2(input_data, packet_payload_count, OFDM_BLOCK_CODE_MAX, OFDM_BLOCK_CODE_PARITY);
             	printf("Packet Payload Count: %i after RS encode.\r\n", packet_payload_count);
         	}

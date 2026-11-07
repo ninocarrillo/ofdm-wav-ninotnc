@@ -126,7 +126,7 @@ typedef union {
 	struct {
 		uint32_t CRC8             :8;
 		uint32_t TrellisCode      :1;
-		uint32_t BlockCode        :1;
+		uint32_t FEC2        :1;
 		uint32_t PerfTrailer      :1;
 		uint32_t RandomizerIndex  :2;
 		uint32_t Constellation    :3;
