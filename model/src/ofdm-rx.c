@@ -132,8 +132,9 @@ int main(int arg_count, char* arg_values[]) {
 					if (Receiver.BytesRemaining <= 0) {
 						// Calculate CRC for payload and put it at the end
 						if (packet_payload_count > 0) {
+							int corrected_bytes;
 							if (Receiver.Syncfield.Fields.FEC2) {
-								packet_payload_count = EDACDecodeRS2(output_data, packet_payload_count, OFDM_BLOCK_CODE_MAX, OFDM_BLOCK_CODE_PARITY);
+								packet_payload_count = EDACDecodeRS2(output_data, packet_payload_count, OFDM_BLOCK_CODE_MAX, OFDM_BLOCK_CODE_PARITY, &corrected_bytes);
 							}
 							packet_payload_count = EDACCheckCCITT16(output_data, packet_payload_count);
 							if (packet_payload_count > 0) {
