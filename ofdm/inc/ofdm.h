@@ -81,7 +81,7 @@ typedef enum ofdm_const_e	{
 // saturation. Higher number provides more attenuation but reduces 
 // dynamic range.
 // Number represents right bit shift.
-#define OFDM_FFT_SHIFT 4
+#define OFDM_FFT_SHIFT 2
 
 // Scaling metric applied to time-domain samples after RIFFT.
 // Number represents left bit shift.
