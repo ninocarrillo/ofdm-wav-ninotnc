@@ -91,7 +91,7 @@ int main(int arg_count, char* arg_values[]) {
 	
 	WAVHdr_struct wav_header;
 	InitWavHdr(&wav_header);
-	WavHdrSetSampleRate(&wav_header, OFDM_SYS_SAMPLE_RATE);
+	WavHdrSetSampleRate(&wav_header, OFDM_FFT_SAMPLE_RATE);
 	
 	// move the output file offset past the header
 	fseek(output_wav_file, sizeof(wav_header), SEEK_SET);

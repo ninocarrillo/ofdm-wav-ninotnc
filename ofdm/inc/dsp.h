@@ -8,7 +8,7 @@
 #ifndef DSP_H
 #define	DSP_H
 
-#define MAX_FIR_TAPS 250
+#define MAX_FIR_TAPS 501
 #define DSP_NORM_FREQ 86400
 
 #include <stdint.h>

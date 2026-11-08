@@ -32,18 +32,19 @@ int main(int arg_count, char* arg_values[]) {
 	fread(&wav_header, sizeof(wav_header), 1, input_wav_file);
 
 	// Check for correct sample rate.
-	int decimate = 0;
-	switch (WavHdrGetSampleRate(&wav_header)) {
-		case OFDM_FFT_SAMPLE_RATE:
-			break;
-		case (OFDM_FFT_SAMPLE_RATE * 2):
-			decimate = 1;
-			break;
-		default:
-			printf("Sample Rate of %s is %i, should be %i or %i.\r\n", arg_values[1], WavHdrGetSampleRate(&wav_header), OFDM_FFT_SAMPLE_RATE, 2*OFDM_FFT_SAMPLE_RATE);
-			return(-1);
-			break;
+	int decimate = 1;
+	int file_sample_rate = WavHdrGetSampleRate(&wav_header);
+	int decimated_sample_rate = file_sample_rate;
+	while ((decimated_sample_rate != OFDM_FFT_SAMPLE_RATE) && (decimate <= MAX_DECI_RATE)) {
+		decimate++;
+		decimated_sample_rate = file_sample_rate / decimate;
 	}
+	if (decimated_sample_rate != OFDM_FFT_SAMPLE_RATE) {
+		printf("Sample Rate of %s is %i, should be multiple of %i.\r\n", arg_values[1], file_sample_rate, OFDM_FFT_SAMPLE_RATE);
+		return(-1);
+	}
+	printf("Decimation rate is %i\r\n", decimate);
+		
 
 	// Check for correct channel count.
 	if (WavHdrGetChannelCount(&wav_header) != 1) {
@@ -64,12 +65,12 @@ int main(int arg_count, char* arg_values[]) {
 
 	// Generate a decimator to reduce sample rate if required.
 	Decimator_struct Decimator;
-	Decimator.Rate = 2;
-	Decimator.TapN = 249;
+	Decimator.Rate = decimate;
+	Decimator.TapN = DECI_FIR_N;
 	Decimator.CircIndex = 0;
 	Decimator.DeciIndex = 0;
 	Decimator.CircN = MAX_FIR_TAPS;
-    GenLPFIR2(Decimator.Taps, 9000, OFDM_FFT_SAMPLE_RATE*2, Decimator.TapN, 1);
+    GenLPFIR2(Decimator.Taps, DECI_FIR_CUTOFF, file_sample_rate, Decimator.TapN, 1);
 
 	OFDM_Rx_struct Receiver;
 	OFDMRxInit(&Receiver);
@@ -93,7 +94,7 @@ int main(int arg_count, char* arg_values[]) {
 		for (int i = 0; i < read_count; i++) {
 			int sample_exists = 0;
 			int16_t sample = 0;
-			if (decimate) {
+			if (decimate > 1) {
 				sample_exists = Decimate(&Decimator, input_buffer[i]);
 				sample = Decimator.Output;
 				//sample = input_buffer[i];

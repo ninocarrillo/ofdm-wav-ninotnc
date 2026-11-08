@@ -8,12 +8,11 @@
 #ifndef OFDM_H
 #define	OFDM_H
 #include <stdint.h>
-#define OFDM_CP_N 64
-#define OFDM_FFT_N 1024
-#define OFDM_FFT_STAGE_N 10
-#define OFDM_SC_REG_BITS 12
-#define OFDM_FFT_SAMPLE_RATE 24000
-#define OFDM_SYS_SAMPLE_RATE 24000
+#define OFDM_CP_N 32
+#define OFDM_FFT_N 512
+#define OFDM_FFT_STAGE_N 9
+#define OFDM_SC_REG_BITS 11
+#define OFDM_FFT_SAMPLE_RATE 12000
 #define OFDM_BIN_HZ ((double)OFDM_FFT_SAMPLE_RATE / (double)OFDM_FFT_N)
 #define OFDM_PREAMBLE_SAMPLE_COUNT 480
 #define OFDM_PREAMBLE_BIN_1 47
