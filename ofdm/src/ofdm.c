@@ -1719,13 +1719,12 @@ void OFDMProcessSyncSymbol(OFDM_Rx_struct *rx) {
 
     uint32_t syncfield = rx->Syncfield.Word;
     OFDMCalcSyncCRC(&syncfield);
-    if (syncfield == rx->Syncfield.Word) {
+    rx->FirstBin = OFDM_START_BIN;
+    rx->LastBin = OFDM_END_BIN;
+    if ((syncfield == rx->Syncfield.Word) && (syncfield != 0)) {
         rx->BytesRemaining = rx->Syncfield.Fields.PayloadByteCount;
         rx->ValidSyncCRC = 1;
-        rx->FirstBin = OFDM_START_BIN;
-        rx->LastBin = OFDM_END_BIN;
         rx->ConstShift = OFDM_CONST_SHIFT;
-
     } else {
         rx->Syncfield.Word = 0;
         rx->BytesRemaining = 0;

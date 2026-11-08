@@ -8,11 +8,11 @@
 #ifndef OFDM_H
 #define	OFDM_H
 #include <stdint.h>
-#define OFDM_CP_N 32
-#define OFDM_FFT_N 512
-#define OFDM_FFT_STAGE_N 9
-#define OFDM_SC_REG_BITS 10
-#define OFDM_FFT_SAMPLE_RATE 12000
+#define OFDM_CP_N 16
+#define OFDM_FFT_N 256
+#define OFDM_FFT_STAGE_N 8
+#define OFDM_SC_REG_BITS 11
+#define OFDM_FFT_SAMPLE_RATE 6000
 #define OFDM_BIN_HZ ((double)OFDM_FFT_SAMPLE_RATE / (double)OFDM_FFT_N)
 #define OFDM_PREAMBLE_SAMPLE_COUNT 480
 #define OFDM_PREAMBLE_BIN_1 47
@@ -81,7 +81,7 @@ typedef enum ofdm_const_e	{
 // saturation. Higher number provides more attenuation but reduces 
 // dynamic range.
 // Number represents right bit shift.
-#define OFDM_FFT_SHIFT 5
+#define OFDM_FFT_SHIFT 4
 
 // Scaling metric applied to time-domain samples after RIFFT.
 // Number represents left bit shift.
@@ -97,7 +97,7 @@ typedef enum ofdm_const_e	{
 #define OFDM_SYNCWORD_CRC_N 8
 #define OFDM_SYNCFIELD_MASK (((1<<(OFDM_SYNCWORD_DATA_N-OFDM_SYNCWORD_CRC_N))-1)<<OFDM_SYNCWORD_CRC_N)
 
-#define OFDM_SC_P1_CUTOFF 20
+#define OFDM_SC_P1_CUTOFF 50
 
 #define OFDM_PRESYNC_MIN_SNR 6
 
