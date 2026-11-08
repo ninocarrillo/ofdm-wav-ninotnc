@@ -188,6 +188,7 @@ typedef struct {
     int16_t PresyncSNRFreeze;
     int32_t AGCFreezeSampleCount;
     uint16_t PresyncDetectFlag :1;
+    uint16_t EnableAGC :1;
 } OFDM_Rx_struct;
 
 
