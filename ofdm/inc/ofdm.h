@@ -75,7 +75,7 @@ typedef enum ofdm_const_e	{
 // positive gains with integer math. Lower number means
 // more bits are left of the decimal place and equalizer
 // can therefore provide more amplification.
-#define OFDM_CONST_SHIFT 11
+#define OFDM_CONST_SHIFT 10
 
 // Scaling metric applied to time-domain samples before RFFT to prevent
 // saturation. Higher number provides more attenuation but reduces 
