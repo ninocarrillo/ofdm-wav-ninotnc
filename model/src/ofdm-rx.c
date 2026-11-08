@@ -113,7 +113,6 @@ int main(int arg_count, char* arg_values[]) {
 							Receiver.DemodWordBitCount = 0;
 							Receiver.State = OFDM_RX_DATA;
 							Receiver.Randomizer = OFDM_RAND_SEED;
-							Receiver.Syncfield.Fields.Bandwidth = 0;
 							packet_payload_count = 0;
 							symbol_count = 0;
 						} else {

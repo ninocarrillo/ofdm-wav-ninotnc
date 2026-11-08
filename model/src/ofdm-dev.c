@@ -34,7 +34,6 @@ void OFDMDumpSync(OFDM_Rx_struct *rx, void *file) {
     fprintf(file, "Byte Count, %i\r\n", rx->Syncfield.Fields.PayloadByteCount);
     fprintf(file, "Constellation, %i\r\n", rx->Syncfield.Fields.Constellation);
     fprintf(file, "Randomizer, %i\r\n", rx->Syncfield.Fields.RandomizerIndex);
-    fprintf(file, "Bandwidth, %i\r\n", rx->Syncfield.Fields.Bandwidth);
 }
 
 void OFDMDumpBaseband(OFDM_Rx_struct *rx, void *file) {

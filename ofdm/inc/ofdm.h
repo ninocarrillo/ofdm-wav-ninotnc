@@ -58,14 +58,6 @@ typedef enum ofdm_const_e	{
 	OFDM_CONST_MAX_BITS,
 } OFDM_CONST;
 
-// bandwidth defs
-typedef enum ofdm_bw_e	{
-	OFDM_BW_FM_NB=0,
-	OFDM_BW_FM_ENB,
-	OFDM_BW_FM_WB,
-	OFDM_BW_FM_EWB
-} OFDM_BW;
-
 #define OFDM_CONST_MASK 0x7
 
 
@@ -74,6 +66,11 @@ typedef enum ofdm_bw_e	{
 
 #define OFDM_PILOT_I 32767
 #define OFDM_PILOT_Q 0
+
+#define OFDM_PILOT_N 3
+#define OFDM_START_BIN 18
+#define OFDM_END_BIN 114
+#define OFDM_SYNCFIELD_BIN(BIT_INDEX) (OFDM_START_BIN + 2 + (BIT_INDEX<<2))
 
 // Scaling factor applied during equalization to allow for
 // positive gains with integer math. Lower number means
@@ -130,7 +127,6 @@ typedef union {
 		uint32_t RandomizerIndex  :OFDM_SYNCFIELD_RANDOMIZER_BITS;
 		uint32_t Constellation    :3;
 		uint32_t PayloadByteCount :9;
-		uint32_t Bandwidth        :2;
 	} Fields;
 	uint32_t Word;
 } Syncfield_union;

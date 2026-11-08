@@ -5,47 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const int16_t OFDM_Pilot_Bins[9] = { \
+const int16_t OFDM_Pilot_Bins[3] = { \
 /* Pilot 0 1500.0000 Hz */	64, \
 /* Pilot 1 1992.1875 Hz */	85, \
 /* Pilot 2 2507.8125 Hz */	107, \
-/* Pilot 3 3000.0000 Hz */  128, \
-/* Pilot 4 3515.6250 Hz */  150, \
-/* Pilot 5 4007.8125 Hz */  171, \
-/* Pilot 6 4500.0000 Hz */  192, \
-/* Pilot 7 4992.1875 Hz */  213, \
-/* Pilot 8 5484.3750 Hz */  234 \
 };
 
-const int OFDM_Pilot_Bin_Inv[9] = {
+const int OFDM_Pilot_Bin_Inv[3] = {
     512, \
     386, \
     306, \
-    256, \
-    218, \
-    192, \
-    171, \
-    154, \
-    140, \
 };
 
-const int16_t OFDM_Pilot_N[4] = { 3, 5, 7, 9};
-
-const int16_t OFDM_Start_Bins[4] = { \
-/* BW 0 468.75 Hz */    18, \
-/* BW 1 328.125 Hz */    14, \
-/* BW 2 187.500 Hz */    8, \
-/* BW 3 187.500 Hz */    8 \
-};
-
-const int16_t OFDM_End_Bins[4] = { \
-/* BW 0 2906.25 Hz */   114, \
-/* BW 1 3984.275 Hz */   170, \
-/* BW 2 5953.125 Hz */   254, \
-/* BW 3 7968.75  Hz */   340 \
-};
-
-#define OFDM_SYNCFIELD_BIN(BIT_INDEX) (OFDM_Start_Bins[0] + 2 + (BIT_INDEX<<2))
 
 const uint16_t OFDM_Syncword[16] = { \
 /* 00 */ 0x030c, \
@@ -690,33 +661,9 @@ void OFDMModulate(int16_t *symbol_buffer, uint16_t data, int constellation) {
 void normalize_ifft_bw(OFDM_Tx_struct *tx) {
     // Calculate pointer to an offset above the memory where cyclic prefix will go later
     int16_t *offset_buffer = &tx->BasebandSamples[OFDM_CP_N];
-   if (tx->Syncfield.Fields.Bandwidth > 0) {
-      int32_t bw_gain = 32768;
-      switch (tx->Syncfield.Fields.Bandwidth) {
-         case OFDM_BW_FM_ENB:
-            bw_gain = OFDM_BW1_IFFT_ATTEN;
-            break;
-         case OFDM_BW_FM_WB:
-            bw_gain = OFDM_BW2_IFFT_ATTEN;
-            break;
-         case OFDM_BW_FM_EWB:
-            bw_gain = OFDM_BW3_IFFT_ATTEN;
-            break;
-         default:
-            break;
-      }
-      for (int i = 0; i < OFDM_FFT_N; i++) {
-         // Apply fixed gain
-         offset_buffer[i] <<= OFDM_IFFT_SHIFT;
-         // Apply bandwidth-variable gain
-         offset_buffer[i] = ((int32_t)offset_buffer[i] * bw_gain) >> 15;
-      }
-   }  else {
-      // No bandwidth-variable gain for BW0
-      for (int i = 0; i < OFDM_FFT_N; i++) {
-         // Apply fixed gain
-         offset_buffer[i] <<= OFDM_IFFT_SHIFT;
-      }
+   for (int i = 0; i < OFDM_FFT_N; i++) {
+      // Apply fixed gain
+      offset_buffer[i] <<= OFDM_IFFT_SHIFT;
    }
 }
 
@@ -738,14 +685,14 @@ int OFDMBuildDataSymbol(OFDM_Tx_struct *tx) {
     // Allocate memory for decomposing the input bytes into 
     // constelation-sized bit chunks
     // Calculate the number of occupied subcarriers
-    int start_bin = OFDM_Start_Bins[tx->Syncfield.Fields.Bandwidth];
-    int end_bin = OFDM_End_Bins[tx->Syncfield.Fields.Bandwidth];
+    int start_bin = OFDM_START_BIN;
+    int end_bin = OFDM_END_BIN;
     int occupied_subcarrier_n = (end_bin - start_bin) + 1;
     for (int i = 0; i < occupied_subcarrier_n; i++) {
         int offset = (start_bin + i)<<1;
 		// Check if this is a pilot or a data subcarrier
 		int pilot = 0;
-		for (int ii = 0; ii < OFDM_Pilot_N[tx->Syncfield.Fields.Bandwidth]; ii++) {
+		for (int ii = 0; ii < OFDM_PILOT_N; ii++) {
 			if ((start_bin + i) == OFDM_Pilot_Bins[ii]) {
 				pilot = 1;
 			}
@@ -888,11 +835,11 @@ int OFDMBuildSyncSymbol(OFDM_Tx_struct *tx) {
       }
 
       // Mute bins not used in this bandwidth
-      int start_bin = OFDM_Start_Bins[tx->Syncfield.Fields.Bandwidth]<<1; // Doubled because i/q pairs stored sequentially
+      int start_bin = OFDM_START_BIN<<1; // Doubled because i/q pairs stored sequentially
       for (int i = 0; i < start_bin; i++) {
         offset_buffer[i] = 0;
       }
-      int end_bin = OFDM_End_Bins[tx->Syncfield.Fields.Bandwidth]<<1;
+      int end_bin = OFDM_END_BIN<<1;
       for (int i = end_bin+2; i < OFDM_FFT_N; i++) {
         offset_buffer[i] = 0;
       }
@@ -1278,9 +1225,9 @@ int16_t near_div(int32_t big, int16_t small) {
   * @note this funciton is only used by OFDMPilotTiming()
   * @retval normalized radians per subcarrier, scaled 32768 = pi radians
   */
-int16_t calc_pilot_angle(int16_t *iq, int16_t bandwidth) {
+int16_t calc_pilot_angle(int16_t *iq) {
     // Calculate sample time offset for each carrier
-    int16_t ofdm_pilot_n = OFDM_Pilot_N[bandwidth];
+    int16_t ofdm_pilot_n = OFDM_PILOT_N;
     int32_t angle_sum = 0;
 	int16_t angle_mem[ofdm_pilot_n];
     for (int i = 0; i < ofdm_pilot_n; i++) {
@@ -1341,7 +1288,7 @@ void OFDMPilotTiming(OFDM_Rx_struct *rx) {
     // at transmission. 
     
 	// angle_err is in units of radians scaled so 32768 = pi
-	int16_t angle_err = calc_pilot_angle(rx->FFTBuf, rx->Syncfield.Fields.Bandwidth);
+	int16_t angle_err = calc_pilot_angle(rx->FFTBuf);
 	
 	//printf("Uncorrected pilot angle err %i\r\n", angle_err);
     if (angle_err != 0) {
@@ -1528,13 +1475,13 @@ int OFDMDemodulate2(OFDM_Rx_struct *rx) {
       OFDMDemodED128QAM, \
       OFDMDemodED256QAM \
    };
-   int start_bin = OFDM_Start_Bins[rx->Syncfield.Fields.Bandwidth];
-   int end_bin = OFDM_End_Bins[rx->Syncfield.Fields.Bandwidth];
+   int start_bin = OFDM_START_BIN;
+   int end_bin = OFDM_END_BIN;
    int bits_per = rx->Syncfield.Fields.Constellation + 1;
    int byte_index = 0;
    for (int i = start_bin; i <= end_bin; i++) {
       int pilot = 0;
-      for (int j = 0; j < OFDM_Pilot_N[rx->Syncfield.Fields.Bandwidth]; j++) {
+      for (int j = 0; j < OFDM_PILOT_N; j++) {
          if (OFDM_Pilot_Bins[j] == i) {
             pilot = 1;
          }
@@ -1775,8 +1722,8 @@ void OFDMProcessSyncSymbol(OFDM_Rx_struct *rx) {
     if (syncfield == rx->Syncfield.Word) {
         rx->BytesRemaining = rx->Syncfield.Fields.PayloadByteCount;
         rx->ValidSyncCRC = 1;
-        rx->FirstBin = OFDM_Start_Bins[rx->Syncfield.Fields.Bandwidth];
-        rx->LastBin = OFDM_End_Bins[rx->Syncfield.Fields.Bandwidth];
+        rx->FirstBin = OFDM_START_BIN;
+        rx->LastBin = OFDM_END_BIN;
         rx->ConstShift = OFDM_CONST_SHIFT;
 
     } else {
