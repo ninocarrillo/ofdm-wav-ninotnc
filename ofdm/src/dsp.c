@@ -329,6 +329,29 @@ int16_t Sinc(int32_t x) {
     return (int16_t) result;
 }
 
+void GenHPFIIR(IIR_Order1_struct *iir, int32_t cutoff, int32_t fs) {
+    int32_t omega = (cutoff * DSP_NORM_FREQ) / fs;
+    int16_t sin_w = GetSinSample(omega);
+    int16_t cos_w = GetCosSample(omega);
+    int32_t alpha = ((32768 - (int32_t)sin_w)<<15) / (int32_t)cos_w;
+    iir->b0 = ((int32_t)32768 + alpha) >> (int32_t)1;
+    iir->b1 = -iir->b0;
+    iir->a1 = -alpha;
+    //printf("IIR b0: %i\r\n", iir->b0);
+    //printf("IIR b1: %i\r\n", iir->b1);
+    //printf("IIR a1: %i\r\n", iir->a1);
+
+}
+
+int16_t UpdateIIROrder1(IIR_Order1_struct *iir, int16_t sample) {
+    int32_t sum = 0;
+    sum += (int32_t)sample * (int32_t)iir->b0;
+    sum += (int32_t)iir->x1 * (int32_t)iir->b1;
+    sum += (int32_t)iir->y1 * (int32_t)iir->a1;
+    iir->x1 = sample;
+    iir->y1 = sum>>15;
+    return iir->y1;
+}
 
 int16_t HannExp(int16_t index, int16_t tap_count, int16_t expand) {
     int32_t m = (DSP_NORM_FREQ / 2) / ((tap_count + (expand * 2)) - 1);
@@ -797,6 +820,7 @@ int Decimate(Decimator_struct *deci, int16_t sample) {
         deci->CircIndex = 0;
     }
     // Put new sample in circular buffer
+    //deci->CircBuf[deci->CircIndex] = UpdateIIROrder1(&deci->HPF, sample);
     deci->CircBuf[deci->CircIndex] = sample;
     // Advance the decimation index
     deci->DeciIndex++;
@@ -955,3 +979,4 @@ int16_t CalcDecibelEnergy(int32_t a, int32_t b) {
     }
     return snr*3;
 }
+

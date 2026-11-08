@@ -73,8 +73,9 @@ int main(int arg_count, char* arg_values[]) {
     GenLPFIR2(Decimator.Taps, DECI_FIR_CUTOFF, file_sample_rate, Decimator.TapN, 1);
     Decimator.PeakDetector.AttackRate = 5000;
     Decimator.PeakDetector.SustainPeriod = 50;
-    Decimator.PeakDetector.DecayRate = 50;
+    Decimator.PeakDetector.DecayRate = 500;
     Decimator.PrescalerShift = 0;
+	GenHPFIIR(&Decimator.HPF, 10, file_sample_rate);
 
 	OFDM_Rx_struct Receiver;
 	OFDMRxInit(&Receiver);
@@ -253,6 +254,7 @@ int main(int arg_count, char* arg_values[]) {
 	printf("Valid empty packets decoded: %i\r\n", empty_packet_count);
 	printf("Packets rejected for CRC: %i\r\n", reject_count);
 	printf("Done.\r\n");
+
 
 	return(packet_count);
 }

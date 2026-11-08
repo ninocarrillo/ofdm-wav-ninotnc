@@ -32,7 +32,17 @@ typedef struct {
 } Int16_Peak_Detector_struct;
 
 typedef struct {
+    int16_t a1;
+    int16_t b0;
+    int16_t b1;
+    int16_t x0;
+    int16_t x1;
+    int16_t y1;
+} IIR_Order1_struct;
+
+typedef struct {
 	Int16_Peak_Detector_struct PeakDetector;
+	IIR_Order1_struct HPF;
 	int16_t CircBuf[MAX_FIR_TAPS];
 	int16_t Taps[MAX_FIR_TAPS];
 	int16_t Output;
@@ -44,8 +54,6 @@ typedef struct {
 	int Rate;
 	uint16_t EnableAGC :1;
 } Decimator_struct;
-
-
 
 extern const int16_t  SquareRootTable[];
 
@@ -89,6 +97,8 @@ int16_t ScaledMag_q15(int16_t*);
 
 void GenLPMAFIR(int16_t *, int32_t, int32_t, int16_t, int16_t, int16_t);
 
+
+void GenHPFIIR(IIR_Order1_struct *, int32_t , int32_t);
 
 int16_t CalcDecibelEnergy(int32_t, int32_t);
 
