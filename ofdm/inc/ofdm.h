@@ -88,14 +88,6 @@ typedef enum ofdm_const_e	{
 // Number represents left bit shift.
 #define OFDM_IFFT_SHIFT 3
 
-// Bandwidth-variable amplitude attenuation applied after RIFFT.
-// These normalize the amplitude of all modes to BW0.
-// =sqrt(bw_x_bin_count / bw_0_bin_count) * 32768
-// These values are applied as Q15.
-#define OFDM_BW1_IFFT_ATTEN 27800
-#define OFDM_BW2_IFFT_ATTEN 22164
-#define OFDM_BW3_IFFT_ATTEN 19088
-
 #define OFDM_PRESYNC_SHIFT 2
 
 #define OFDM_RAND_SEED 0xED
