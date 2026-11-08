@@ -738,6 +738,55 @@ int Interpolate(Interpolator_struct *interpolator, int16_t *input_data, int inpu
 	return output_index;
 }
 
+void PeakDetect(int16_t signal_value, Int16_Peak_Detector_struct *detector) {
+    // Perform peak detection, record magnitude of peaks, return filtered peak
+    // value.
+    // Calculate magnitude of signal.
+    if (signal_value < 0) {
+        signal_value = -signal_value;
+    }
+    // Determine if magnitude is rising or falling.
+    if (signal_value > detector->LastValue) {
+        // Magnitude is rising.
+        if (signal_value >= detector->Envelope) {
+            if (((int32_t)detector->Envelope + (int32_t)detector->AttackRate) > (int32_t)signal_value) {
+                detector->Envelope = signal_value;
+            } else {
+                detector->Envelope += detector->AttackRate;
+            }
+            detector->SustainCount = 0;
+        }
+    }
+    detector->LastValue = signal_value;
+    // Apply a Sustain/Decay process.
+    if (detector->SustainCount++ >= detector->SustainPeriod) {
+        // Sustain interval has elapsed.
+        // Decay the envelope.
+        detector->Envelope -= detector->DecayRate;
+        if (detector->Envelope <= 0) {
+            detector->Envelope = 0;
+            detector->SustainCount = 0;
+        }
+    }
+}
+
+const int16_t AGCScaleTable[256] = {  \
+      32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, \
+      32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, \
+      32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, \
+      32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, 32767, \
+      32764, 32260, 31771, 31297, 30837, 30390, 29956, 29534, 29124, 28725, 28336, 27959, 27591, 27232, 26883, 26543, \
+      26211, 25888, 25572, 25264, 24963, 24669, 24383, 24102, 23828, 23561, 23299, 23043, 22792, 22547, 22307, 22073, \
+      21843, 21617, 21397, 21181, 20969, 20761, 20558, 20358, 20162, 19970, 19782, 19597, 19416, 19238, 19063, 18891, \
+      18722, 18557, 18394, 18234, 18077, 17922, 17770, 17621, 17474, 17330, 17188, 17048, 16910, 16775, 16642, 16511, \
+      16382, 16255, 16130, 16007, 15886, 15766, 15648, 15533, 15418, 15306, 15195, 15086, 14978, 14872, 14767, 14664, \
+      14562, 14461, 14362, 14265, 14168, 14073, 13979, 13887, 13795, 13705, 13616, 13528, 13442, 13356, 13271, 13188, \
+      13106, 13024, 12944, 12864, 12786, 12708, 12632, 12556, 12482, 12408, 12335, 12263, 12191, 12121, 12051, 11982, \
+      11914, 11847, 11780, 11715, 11649, 11585, 11521, 11458, 11396, 11335, 11274, 11213, 11154, 11095, 11036, 10979, \
+      10921, 10865, 10809, 10753, 10698, 10644, 10590, 10537, 10484, 10432, 10381, 10330, 10279, 10229, 10179, 10130, \
+      10081, 10033, 9985, 9938, 9891, 9845, 9799, 9753, 9708, 9663, 9619, 9575, 9531, 9488, 9445, 9403, \
+      9361, 9320, 9278, 9237, 9197, 9157, 9117, 9077, 9038, 9000, 8961, 8923, 8885, 8848, 8810, 8774, \
+      8737, 8701, 8665, 8629, 8594, 8559, 8524, 8489, 8455, 8421, 8388, 8354, 8321, 8288, 8255, 8223 };
 
 int Decimate(Decimator_struct *deci, int16_t sample) {
     int data_flag = 0;
@@ -757,7 +806,26 @@ int Decimate(Decimator_struct *deci, int16_t sample) {
         // There is rollover, indicate new data will be available
         data_flag = 1;
         // Perform filter
-        deci->Output = GetFastFilterOutput(deci->CircBuf, deci->CircIndex, deci->CircN, deci->Taps, deci->TapN, 1);
+        deci->Output = GetFastFilterOutput(deci->CircBuf, deci->CircIndex, deci->CircN, deci->Taps, deci->TapN, deci->PrescalerShift);
+
+        if (deci->EnableAGC) {
+            PeakDetect(deci->Output, &deci->PeakDetector);
+        } 
+        deci->Output = ((int32_t)deci->Output * (int32_t)AGCScaleTable[(uint16_t)deci->PeakDetector.Envelope >> 7])>>15;
+        //printf("\r\nAGC: %.2f, Shift: %i", (float)AGCScaleTable[(uint16_t)deci->PeakDetector.Envelope >> 7] / 32768.0, deci->PrescalerShift);
+        if (deci->PeakDetector.Envelope > 30000) {
+            deci->PrescalerShift++;
+            deci->PeakDetector.Envelope /= 2;
+            if (deci->PrescalerShift > 16) {
+                deci->PrescalerShift = 16;
+            }
+        } else if (deci->PeakDetector.Envelope < 10000) {
+            deci->PrescalerShift--;
+            deci->PeakDetector.Envelope *= 2;
+            if (deci->PrescalerShift < -7) {
+                deci->PrescalerShift = -7;
+            }
+        } 
     }
     return data_flag;
 }

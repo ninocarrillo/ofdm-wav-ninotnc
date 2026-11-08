@@ -23,15 +23,29 @@ typedef struct {
 } Interpolator_struct;
 
 typedef struct {
+    int16_t LastValue;
+    int16_t Envelope;
+    int16_t AttackRate;
+    int16_t DecayRate;
+    int16_t SustainPeriod;
+    int16_t SustainCount;
+} Int16_Peak_Detector_struct;
+
+typedef struct {
+	Int16_Peak_Detector_struct PeakDetector;
 	int16_t CircBuf[MAX_FIR_TAPS];
 	int16_t Taps[MAX_FIR_TAPS];
 	int16_t Output;
+	int16_t PrescalerShift;
 	int TapN;
 	int CircIndex;
 	int CircN;
 	int DeciIndex;
 	int Rate;
+	uint16_t EnableAGC :1;
 } Decimator_struct;
+
+
 
 extern const int16_t  SquareRootTable[];
 

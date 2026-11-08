@@ -71,6 +71,10 @@ int main(int arg_count, char* arg_values[]) {
 	Decimator.DeciIndex = 0;
 	Decimator.CircN = MAX_FIR_TAPS;
     GenLPFIR2(Decimator.Taps, DECI_FIR_CUTOFF, file_sample_rate, Decimator.TapN, 1);
+    Decimator.PeakDetector.AttackRate = 5000;
+    Decimator.PeakDetector.SustainPeriod = 500;
+    Decimator.PeakDetector.DecayRate = 1;
+    Decimator.PrescalerShift = 0;
 
 	OFDM_Rx_struct Receiver;
 	OFDMRxInit(&Receiver);
@@ -95,6 +99,11 @@ int main(int arg_count, char* arg_values[]) {
 			int sample_exists = 0;
 			int16_t sample = 0;
 			if (decimate > 1) {
+				if (Receiver.EnableAGC) {
+					Decimator.EnableAGC = 1;
+				} else {
+					Decimator.EnableAGC = 0;
+				}
 				sample_exists = Decimate(&Decimator, input_buffer[i]);
 				sample = Decimator.Output;
 				//sample = input_buffer[i];
