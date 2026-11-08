@@ -159,6 +159,11 @@ int main(int arg_count, char* arg_values[]) {
 							printf("Signal E %i\r\n", Receiver.SignalE);
 							printf("Noise E %i\r\n", Receiver.NoiseE);
 							printf("Est SNR: %i\r\n", CalcDecibelEnergy(Receiver.SignalE, Receiver.NoiseE));
+							printf("Eq Low Bin: [%i,%i]\r\n", Receiver.Eq[OFDM_START_BIN<<1], Receiver.Eq[(OFDM_START_BIN<<1)+1]);
+							printf("Eq Low Mag: %i\r\n", Receiver.EqLowBinMag);
+							printf("Eq Mid Mag: %i\r\n", Receiver.EqMidBinMag);
+							printf("Eq High Mag: %i\r\n", Receiver.EqHighBinMag);
+
 							if (Receiver.Syncfield.Fields.PayloadByteCount > 0) {
 								// Only change to receive state if there are data bytes to follow.
 								if (Receiver.Syncfield.Fields.FEC) {

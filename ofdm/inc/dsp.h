@@ -70,6 +70,8 @@ void ComplexMul_q13(int16_t*, int16_t*, int16_t*);
 void ComplexMul_var(int16_t*, int16_t*, int16_t*, int);
 int16_t EuclidianDistance_q15(int16_t *, int16_t *);
 
+int16_t ScaledSquareRoot_q15(uint16_t);
+int16_t ScaledMag_q15(int16_t*);
 
 void GenLPMAFIR(int16_t *, int32_t, int32_t, int16_t, int16_t, int16_t);
 

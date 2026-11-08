@@ -147,6 +147,9 @@ typedef struct {
 	int16_t SyncLPF[OFDM_BUF2_N];
 	int16_t CircBuf2[OFDM_BUF2_N];
 	int16_t Eq[OFDM_FFT_N];
+	int16_t EqLowBinMag;
+	int16_t EqMidBinMag;
+	int16_t EqHighBinMag;
 	int16_t FFTBuf[OFDM_FFT_N];
 	uint8_t DataBuf[OFDM_MAX_SYMBOL_DATA];
 	uint16_t DemodWord;

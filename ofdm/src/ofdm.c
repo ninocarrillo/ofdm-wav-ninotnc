@@ -1184,6 +1184,10 @@ void OFDMCalcEq_2(OFDM_Rx_struct *rx) {
         // Calculate imaginary part
         rx->Eq[j] = (rx->Eq[j+2]>>1) + (rx->Eq[j-2]>>1);
     }
+    // Calculate equalizer magnitudes at certain bins for user feedback:
+    rx->EqLowBinMag = ScaledMag_q15(&rx->Eq[OFDM_START_BIN<<1]);
+    rx->EqHighBinMag = ScaledMag_q15(&rx->Eq[OFDM_END_BIN<<1]);
+    rx->EqMidBinMag = ScaledMag_q15(&rx->Eq[((OFDM_END_BIN - OFDM_START_BIN)>>1) + OFDM_START_BIN]);
 }
 
 
@@ -1680,6 +1684,12 @@ int OFDMDataReceive(OFDM_Rx_struct *rx, int16_t sample) {
 void OFDMCalcSNR(OFDM_Rx_struct *rx) {
     rx->SignalE = 0;
     rx->NoiseE = 0;
+    if (rx->LastBin >= (OFDM_FFT_N >> 1)) {
+      rx->LastBin = (OFDM_FFT_N>>1)-1;
+    }
+    if (rx->FirstBin < 1) {
+      rx->FirstBin = 1;
+    }
     for (int i = rx->FirstBin; i <= rx->LastBin; i++) {
         int ii = i<<1;
         if (i % 2 == 0) {

@@ -9,7 +9,7 @@
 // Scaled square root table.
 // M = SquareRootTable[N];
 // N {0,1,...,1023}
-// M = 2 * sqrt(1024 * N)
+// M = sqrt(4096 * N)
 const int16_t  SquareRootTable[1024] = {  \
       0, 64, 91, 111, 128, 143, 157, 169, \
       181, 192, 202, 212, 222, 231, 239, 248, \
@@ -140,6 +140,16 @@ const int16_t  SquareRootTable[1024] = {  \
       2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, \
       2040, 2041, 2042, 2043, 2044, 2045, 2046, 2047
 };
+
+
+int16_t ScaledSquareRoot_q15(uint16_t x) {
+    return SquareRootTable[x>>5];
+}
+
+int16_t ScaledMag_q15(int16_t *x) {
+    int32_t mag = (((int32_t)x[0] * (int32_t)x[0]) + ((int32_t)x[1] * (int32_t)x[1])) >> 16;
+    return SquareRootTable[(mag>>6) & 0x3FF]>>6;
+}
 
 const int16_t SineSamples[676] = {  \
       0, 76, 153, 229, 305, 381, 457, 534, \
