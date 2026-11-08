@@ -85,7 +85,7 @@ typedef enum ofdm_const_e	{
 
 // Scaling metric applied to time-domain samples after RIFFT.
 // Number represents left bit shift.
-#define OFDM_IFFT_SHIFT 3
+#define OFDM_IFFT_SHIFT 2
 
 #define OFDM_PRESYNC_SHIFT 2
 

@@ -64,7 +64,7 @@ int main(int arg_count, char* arg_values[]) {
 	
 	if (arg_count < 6) {
 		printf("Not enough arguments.\r\n");
-		printf("Usage:\r\nofdm-tx.exe <input text file> <output wav file> <constellation> <block code> < trellis code>\r\n");
+		printf("Usage:\r\nofdm-tx.exe <input text file> <output wav file> <constellation> <FEC> <interp rate>\r\n");
 		return(-1);
 	}
 
@@ -72,7 +72,7 @@ int main(int arg_count, char* arg_values[]) {
 
 	int block_code_arg = atoi(arg_values[4]);
 
-	int trellis_code_arg = atoi(arg_values[5]);
+	int interp_rate_arg = atoi(arg_values[5]);
 	
 	FILE *input_file;
 	input_file = fopen(arg_values[1], "r");
@@ -87,11 +87,23 @@ int main(int arg_count, char* arg_values[]) {
 		printf("Could not create %s.\r\n", arg_values[2]);
 		return(-1);
 	}
+
+	if ((interp_rate_arg > 8) || (interp_rate_arg < 1)) {
+		printf("Interp rate must be between 1 and 8.\r\n");
+		return(-1);
+	}
+
+	Interpolator_struct Interpolator;
+	Interpolator.Rate = interp_rate_arg;
+	Interpolator.TapN = INTERP_FIR_N;
+	Interpolator.CircN = MAX_FIR_TAPS;
+	Interpolator.CircIndex = 0;
+	GenInterpFIR2(Interpolator.Taps, INTERP_FIR_CUTOFF, OFDM_FFT_SAMPLE_RATE * interp_rate_arg, interp_rate_arg, Interpolator.TapN);
 	
 	
 	WAVHdr_struct wav_header;
 	InitWavHdr(&wav_header);
-	WavHdrSetSampleRate(&wav_header, OFDM_FFT_SAMPLE_RATE);
+	WavHdrSetSampleRate(&wav_header, OFDM_FFT_SAMPLE_RATE * interp_rate_arg);
 	
 	// move the output file offset past the header
 	fseek(output_wav_file, sizeof(wav_header), SEEK_SET);
@@ -114,6 +126,7 @@ int main(int arg_count, char* arg_values[]) {
 	}
 
 	int16_t output_samples[2 * (OFDM_FFT_N + OFDM_CP_N)];
+	int16_t interpolated_samples[8 * (OFDM_FFT_N + OFDM_CP_N)];
 
 	// Put some silence here first
 	for (int i = 0; i < 2*(OFDM_FFT_N+OFDM_CP_N); i++) {
@@ -188,10 +201,12 @@ int main(int arg_count, char* arg_values[]) {
 
 			
 			// Write symbol to the output file
-			fwrite(baseband_samples, baseband_sample_count*sizeof(baseband_samples[0]), 1, output_wav_file);
-			
+			//Interpolate(&Interpolator, basband_samples, baseband_sample_count, interpolated_samples, 0);
+			//fwrite(baseband_samples, baseband_sample_count*sizeof(baseband_samples[0]), 1, output_wav_file);
+			int interpolated_sample_count = Interpolate(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
+			fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
 			// Update wavfile header with new sample count
-			WavHdrAddSamples(&wav_header, baseband_sample_count);
+			WavHdrAddSamples(&wav_header, interpolated_sample_count);
 		}
 
 		Transmitter.ExtendedPayloadByteCount = packet_payload_count;
@@ -218,11 +233,10 @@ int main(int arg_count, char* arg_values[]) {
 			printf("Data Sym Peak to Avg dB: %0.1f\r\n", 20*(log10((float)peak/(float)avg)));
 			
 			
-			// Write symbol to the output file
-			fwrite(baseband_samples, baseband_sample_count * sizeof(baseband_samples[0]), 1, output_wav_file);
-
+			int interpolated_sample_count = Interpolate(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
+			fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
 			// Update wavfile header with new sample count
-			WavHdrAddSamples(&wav_header, baseband_sample_count);
+			WavHdrAddSamples(&wav_header, interpolated_sample_count);
 		}
 	}
 	
@@ -231,11 +245,10 @@ int main(int arg_count, char* arg_values[]) {
 	for (int i = 0; i < 2*(OFDM_FFT_N+OFDM_CP_N); i++) {
 		output_samples[i] = 0;
 	}
-	// Write the blank symbol to the output file
-	int wrote = fwrite(output_samples, sizeof(output_samples), 1, output_wav_file);
-	
-	// Update the wavfile header with new sample count
-	WavHdrAddSamples(&wav_header, 2 * (OFDM_FFT_N + OFDM_CP_N));
+	int interpolated_sample_count = Interpolate(&Interpolator, output_samples, 2*(OFDM_FFT_N+OFDM_CP_N), interpolated_samples, 0);
+	fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
+	// Update wavfile header with new sample count
+	WavHdrAddSamples(&wav_header, interpolated_sample_count);
 	
 	// Seek to the 0 position of the output wav file to put the header there
 	fseek(output_wav_file, 0, SEEK_SET);
