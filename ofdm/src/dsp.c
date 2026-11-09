@@ -761,6 +761,23 @@ int Interpolate(Interpolator_struct *interpolator, int16_t *input_data, int inpu
 	return output_index;
 }
 
+
+int Interpolate2(Interpolator_struct *interpolator, int16_t *input_data, int input_count, int16_t *output_data, int shift) {
+    int output_index = 0;
+    for (int i = 0; i < input_count; i++) {
+        interpolator->CircIndex++;
+        if (interpolator->CircIndex >= interpolator->CircN) {
+            interpolator->CircIndex = 0;
+        }
+        // Put input data into circular buffer
+        interpolator->CircBuf[interpolator->CircIndex] = input_data[i];
+        for (int j = 0; j < interpolator->Rate; j++) {
+            output_data[output_index++] = GetFastFilterOutput(interpolator->CircBuf, interpolator->CircIndex, interpolator->CircN, &interpolator->Taps[j*interpolator->TapN], interpolator->TapN, shift);
+        }
+    }
+    return output_index;
+}
+
 void PeakDetect(int16_t signal_value, Int16_Peak_Detector_struct *detector) {
     // Perform peak detection, record magnitude of peaks, return filtered peak
     // value.

@@ -81,6 +81,7 @@ int16_t GetHPFTap(int32_t, int16_t, int16_t);
 
 int16_t GetFastFilterOutput(int16_t *, int, int, int16_t *, int, int);
 int Interpolate(Interpolator_struct *, int16_t *, int, int16_t *, int);
+int Interpolate2(Interpolator_struct *, int16_t *, int, int16_t *, int);
 int Decimate(Decimator_struct *, int16_t);
 
 int32_t Sqrt(int32_t x);

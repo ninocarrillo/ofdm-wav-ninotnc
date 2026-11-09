@@ -125,28 +125,12 @@ int main(int arg_count, char* arg_values[]) {
 		printf("\r\n");
 	}
 
-	int16_t output_samples[2 * (OFDM_FFT_N + OFDM_CP_N)];
 	int16_t interpolated_samples[8 * (OFDM_FFT_N + OFDM_CP_N)];
-
-	// Put some silence here first
-	for (int i = 0; i < 2*(OFDM_FFT_N+OFDM_CP_N); i++) {
-		output_samples[i] = 0;
-	}
-
-	// Write the blank symbol to the output file
-	fwrite(output_samples, sizeof(output_samples), 1, output_wav_file);
-	
-	// Update the wavfile header with new sample count
-	WavHdrAddSamples(&wav_header, 2 * (OFDM_FFT_N + OFDM_CP_N));
 	
 	// Treat each line of the text file as a packet.
 	// Generate an OFDM transmission for each packet.
 	int zero_length_count = 0;
-		for (int i = 0; i < packet_count; i++) {
-		// Put some silence here first
-		for (int i = 0; i < 2*(OFDM_FFT_N+OFDM_CP_N); i++) {
-			output_samples[i] = 0;
-		}
+	for (int i = 0; i < packet_count; i++) {
 		
 		// Buffers for the baseband samples and the interpolated samples. Buffer size is one symbol plus cyclic prefix
 		int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N];
@@ -203,7 +187,7 @@ int main(int arg_count, char* arg_values[]) {
 			// Write symbol to the output file
 			//Interpolate(&Interpolator, basband_samples, baseband_sample_count, interpolated_samples, 0);
 			//fwrite(baseband_samples, baseband_sample_count*sizeof(baseband_samples[0]), 1, output_wav_file);
-			int interpolated_sample_count = Interpolate(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
+			int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
 			fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
 			// Update wavfile header with new sample count
 			WavHdrAddSamples(&wav_header, interpolated_sample_count);
@@ -233,7 +217,7 @@ int main(int arg_count, char* arg_values[]) {
 			printf("Data Sym Peak to Avg dB: %0.1f\r\n", 20*(log10((float)peak/(float)avg)));
 			
 			
-			int interpolated_sample_count = Interpolate(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
+			int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
 			fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
 			// Update wavfile header with new sample count
 			WavHdrAddSamples(&wav_header, interpolated_sample_count);
@@ -241,11 +225,14 @@ int main(int arg_count, char* arg_values[]) {
 	}
 	
 
+	int silence_count = 2 * (OFDM_FFT_N + OFDM_CP_N);
+	int16_t output_samples[silence_count];
+
 	// Put some silence at the end of the file.
-	for (int i = 0; i < 2*(OFDM_FFT_N+OFDM_CP_N); i++) {
+	for (int i = 0; i < silence_count; i++) {
 		output_samples[i] = 0;
 	}
-	int interpolated_sample_count = Interpolate(&Interpolator, output_samples, 2*(OFDM_FFT_N+OFDM_CP_N), interpolated_samples, 0);
+	int interpolated_sample_count = Interpolate2(&Interpolator, output_samples, silence_count, interpolated_samples, 0);
 	fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
 	// Update wavfile header with new sample count
 	WavHdrAddSamples(&wav_header, interpolated_sample_count);
@@ -265,7 +252,6 @@ int main(int arg_count, char* arg_values[]) {
 	printf("Zero-length packet count: %i\r\n", zero_length_count);
 	printf("Data packet count: %i\r\n", packet_count-zero_length_count);
 	printf("OFDM SYNCFIELD MASK %x\r\n", OFDM_SYNCFIELD_MASK);
-
 	printf("Done.\r\n");
 	return(0);
 }
