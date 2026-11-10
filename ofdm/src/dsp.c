@@ -531,7 +531,7 @@ void GenInterpFIR4(int16_t *taps, int32_t cutoff_freq, int32_t sample_rate, int 
         gain += temp_taps[i];
         x += cutoff_freq;
     }
-    // Normalize gain to about 1x
+    // Normalize gain
     for (int i = 0; i < tap_count; i++) {
         x = temp_taps[i];
         x *= set_gain;
@@ -765,12 +765,12 @@ int Interpolate(Interpolator_struct *interpolator, int16_t *input_data, int inpu
 int Interpolate2(Interpolator_struct *interpolator, int16_t *input_data, int input_count, int16_t *output_data, int shift) {
     int output_index = 0;
     for (int i = 0; i < input_count; i++) {
+        // Put input data into circular buffer
+        interpolator->CircBuf[interpolator->CircIndex] = input_data[i];
         interpolator->CircIndex++;
         if (interpolator->CircIndex >= interpolator->CircN) {
             interpolator->CircIndex = 0;
         }
-        // Put input data into circular buffer
-        interpolator->CircBuf[interpolator->CircIndex] = input_data[i];
         for (int j = 0; j < interpolator->Rate; j++) {
             output_data[output_index++] = GetFastFilterOutput(interpolator->CircBuf, interpolator->CircIndex, interpolator->CircN, &interpolator->Taps[j*interpolator->TapN], interpolator->TapN, shift);
         }
@@ -857,14 +857,14 @@ int Decimate(Decimator_struct *deci, int16_t sample) {
         if (deci->PeakDetector.Envelope > 30000) {
             deci->PrescalerShift++;
             deci->PeakDetector.Envelope /= 2;
-            if (deci->PrescalerShift > 16) {
-                deci->PrescalerShift = 16;
+            if (deci->PrescalerShift > 3) {
+                deci->PrescalerShift = 3;
             }
         } else if (deci->PeakDetector.Envelope < 10000) {
             deci->PrescalerShift--;
             deci->PeakDetector.Envelope *= 2;
-            if (deci->PrescalerShift < -7) {
-                deci->PrescalerShift = -7;
+            if (deci->PrescalerShift < -3) {
+                deci->PrescalerShift = -3;
             }
         } 
     }

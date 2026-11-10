@@ -71,7 +71,7 @@ int main(int arg_count, char* arg_values[]) {
 	Decimator.DeciIndex = 0;
 	Decimator.CircN = MAX_FIR_TAPS;
     GenLPFIR2(Decimator.Taps, DECI_FIR_CUTOFF, file_sample_rate, Decimator.TapN, 1);
-    Decimator.PeakDetector.AttackRate = 5000;
+    Decimator.PeakDetector.AttackRate = 15000;
     Decimator.PeakDetector.SustainPeriod = 50;
     Decimator.PeakDetector.DecayRate = 500;
     Decimator.PrescalerShift = 0;

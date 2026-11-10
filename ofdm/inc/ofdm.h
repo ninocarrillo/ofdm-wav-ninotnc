@@ -14,7 +14,7 @@
 #define OFDM_SC_REG_BITS 11
 #define OFDM_FFT_SAMPLE_RATE 6000
 #define OFDM_BIN_HZ ((double)OFDM_FFT_SAMPLE_RATE / (double)OFDM_FFT_N)
-#define OFDM_PREAMBLE_SAMPLE_COUNT 480
+#define OFDM_PREAMBLE_SAMPLE_COUNT 120
 #define OFDM_PREAMBLE_BIN_1 47
 #define OFDM_PREAMBLE_BIN_2 83
 #define OFDM_PREAMBLE_TONE_1 (OFDM_BIN_HZ * OFDM_PREAMBLE_BIN_1)
@@ -75,7 +75,7 @@ typedef enum ofdm_const_e	{
 // positive gains with integer math. Lower number means
 // more bits are left of the decimal place and equalizer
 // can therefore provide more amplification.
-#define OFDM_CONST_SHIFT 10
+#define OFDM_CONST_SHIFT 11
 
 // Scaling metric applied to time-domain samples before RFFT to prevent
 // saturation. Higher number provides more attenuation but reduces 
@@ -85,9 +85,9 @@ typedef enum ofdm_const_e	{
 
 // Scaling metric applied to time-domain samples after RIFFT.
 // Number represents left bit shift.
-#define OFDM_IFFT_SHIFT 2
+#define OFDM_IFFT_SHIFT 1
 
-#define OFDM_PRESYNC_SHIFT 2
+#define OFDM_PRESYNC_SHIFT 3
 
 #define OFDM_RAND_SEED 0xED
 
@@ -99,7 +99,7 @@ typedef enum ofdm_const_e	{
 
 #define OFDM_SC_P1_CUTOFF 25
 
-#define OFDM_PRESYNC_MIN_SNR 7
+#define OFDM_PRESYNC_MIN_SNR 8
 
 #define OFDM_SC_ARM_E_THRESH 500
 

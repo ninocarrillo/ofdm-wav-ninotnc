@@ -62,9 +62,9 @@ void clip_samples(int16_t *buf, int count, int max) {
 
 int main(int arg_count, char* arg_values[]) {
 	
-	if (arg_count < 6) {
+	if (arg_count < 7) {
 		printf("Not enough arguments.\r\n");
-		printf("Usage:\r\nofdm-tx.exe <input text file> <output wav file> <constellation> <FEC> <interp rate>\r\n");
+		printf("Usage:\r\nofdm-tx.exe <input text file> <output wav file> <constellation> <FEC> <presync 20ms> <interp rate>\r\n");
 		return(-1);
 	}
 
@@ -72,7 +72,9 @@ int main(int arg_count, char* arg_values[]) {
 
 	int block_code_arg = atoi(arg_values[4]);
 
-	int interp_rate_arg = atoi(arg_values[5]);
+	int presync_arg = atoi(arg_values[5]);
+
+	int interp_rate_arg = atoi(arg_values[6]);
 	
 	FILE *input_file;
 	input_file = fopen(arg_values[1], "r");
@@ -116,6 +118,10 @@ int main(int arg_count, char* arg_values[]) {
 	Transmitter.Syncfield.Fields.RandomizerIndex = 0;
 	Transmitter.Randomizer = OFDM_RAND_SEED;
 
+	// Buffers for the baseband samples and the interpolated samples. Buffer size is one symbol plus cyclic prefix
+	int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N];
+	int16_t interpolated_samples[MAX_INTERP_RATE * (OFDM_FFT_N + OFDM_CP_N)];
+
 	// Test Randomizer
 	printf("Randomizer Test: %i\r\n", Transmitter.Syncfield.Fields.RandomizerIndex);
 	for (int i = 0; i < 16; i++) {
@@ -124,16 +130,12 @@ int main(int arg_count, char* arg_values[]) {
 		}
 		printf("\r\n");
 	}
-
-	int16_t interpolated_samples[8 * (OFDM_FFT_N + OFDM_CP_N)];
 	
 	// Treat each line of the text file as a packet.
 	// Generate an OFDM transmission for each packet.
 	int zero_length_count = 0;
 	for (int i = 0; i < packet_count; i++) {
 		
-		// Buffers for the baseband samples and the interpolated samples. Buffer size is one symbol plus cyclic prefix
-		int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N];
 
 		// A buffer for the payload data
 		uint8_t input_data[MAX_PAYLOAD+2];
@@ -150,7 +152,7 @@ int main(int arg_count, char* arg_values[]) {
 		Transmitter.Syncfield.Fields.Constellation = const_arg & 7;
 		Transmitter.Syncfield.Fields.FEC = block_code_arg & 1;
 		Transmitter.Syncfield.Fields.RandomizerIndex = Transmitter.RandomizerIndex;
-		Transmitter.TxPreambleCount = 4;
+		Transmitter.TxPreambleCount = presync_arg;
 
 		// Count how many characters this line contains
 		int packet_payload_count = txtCountChars(input_data);
@@ -171,6 +173,19 @@ int main(int arg_count, char* arg_values[]) {
 		}
 	
 
+		for (int j = 0; j < presync_arg; j++) {
+			// Put some silence before each transmission.
+			int silence_count = OFDM_PREAMBLE_SAMPLE_COUNT;
+			for (int i = 0; i < silence_count; i++) {
+				baseband_samples[i] = 0;
+			}
+			int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, silence_count, interpolated_samples, -Interpolator.Rate/2);
+			fwrite(interpolated_samples, sizeof(interpolated_samples[0]), interpolated_sample_count, output_wav_file);
+			// Update wavfile header with new sample count
+			WavHdrAddSamples(&wav_header, interpolated_sample_count);
+		}
+
+
 		while (Transmitter.TxPreambleCount > 0) {
 			int baseband_sample_count = OFDMBuildSyncSymbol(&Transmitter);
 
@@ -185,12 +200,14 @@ int main(int arg_count, char* arg_values[]) {
 
 			
 			// Write symbol to the output file
-			//Interpolate(&Interpolator, basband_samples, baseband_sample_count, interpolated_samples, 0);
-			//fwrite(baseband_samples, baseband_sample_count*sizeof(baseband_samples[0]), 1, output_wav_file);
-			int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
-			fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
+			int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, -Interpolator.Rate/2);
+			size_t written = fwrite(interpolated_samples, sizeof(interpolated_samples[0]), interpolated_sample_count, output_wav_file);
 			// Update wavfile header with new sample count
 			WavHdrAddSamples(&wav_header, interpolated_sample_count);
+			printf("Baseband contained %i samples of %lu bytes each.\r\n", baseband_sample_count, sizeof(baseband_samples[0]));
+			printf("Interpolated %i samples of %lu bytes each.\r\n", interpolated_sample_count, sizeof(interpolated_samples[0]));
+			printf("Interpolated sample buffer is %lu bytes long.\r\n", sizeof(interpolated_samples));
+			printf("Fwrite wrote %zu elements.\r\n", written);
 		}
 
 		Transmitter.ExtendedPayloadByteCount = packet_payload_count;
@@ -217,23 +234,26 @@ int main(int arg_count, char* arg_values[]) {
 			printf("Data Sym Peak to Avg dB: %0.1f\r\n", 20*(log10((float)peak/(float)avg)));
 			
 			
-			int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, 0);
-			fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
+			int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, baseband_sample_count, interpolated_samples, -Interpolator.Rate/2);
+			size_t written = fwrite(interpolated_samples, sizeof(interpolated_samples[0]), interpolated_sample_count, output_wav_file);
 			// Update wavfile header with new sample count
 			WavHdrAddSamples(&wav_header, interpolated_sample_count);
+			printf("Baseband contained %i samples of %lu bytes each.\r\n", baseband_sample_count, sizeof(baseband_samples[0]));
+			printf("Preamble interpolated %i samples of %lu bytes each.\r\n", interpolated_sample_count, sizeof(interpolated_samples[0]));
+			printf("Interpolated sample buffer is %lu bytes long.\r\n", sizeof(interpolated_samples));
+			printf("Fwrite wrote %zu elements.\r\n", written);
 		}
 	}
 	
 
-	int silence_count = 2 * (OFDM_FFT_N + OFDM_CP_N);
-	int16_t output_samples[silence_count];
+	int silence_count = MAX_FIR_TAPS;
 
 	// Put some silence at the end of the file.
 	for (int i = 0; i < silence_count; i++) {
-		output_samples[i] = 0;
+		baseband_samples[i] = 0;
 	}
-	int interpolated_sample_count = Interpolate2(&Interpolator, output_samples, silence_count, interpolated_samples, 0);
-	fwrite(interpolated_samples, interpolated_sample_count*sizeof(interpolated_samples[0]), 1, output_wav_file);
+	int interpolated_sample_count = Interpolate2(&Interpolator, baseband_samples, silence_count, interpolated_samples, -Interpolator.Rate/2);
+	fwrite(interpolated_samples, sizeof(interpolated_samples[0]), interpolated_sample_count, output_wav_file);
 	// Update wavfile header with new sample count
 	WavHdrAddSamples(&wav_header, interpolated_sample_count);
 	
