@@ -87,7 +87,7 @@ typedef enum ofdm_const_e	{
 // Number represents left bit shift.
 #define OFDM_IFFT_SHIFT 1
 
-#define OFDM_PRESYNC_SHIFT 3
+#define OFDM_PRESYNC_SHIFT 2
 
 #define OFDM_RAND_SEED 0xED
 

@@ -90,7 +90,7 @@ int main(int arg_count, char* arg_values[]) {
 		return(-1);
 	}
 
-	if ((interp_rate_arg > 8) || (interp_rate_arg < 1)) {
+	if ((interp_rate_arg > MAX_INTERP_RATE) || (interp_rate_arg < 1)) {
 		printf("Interp rate must be between 1 and 8.\r\n");
 		return(-1);
 	}
@@ -119,8 +119,8 @@ int main(int arg_count, char* arg_values[]) {
 	Transmitter.Randomizer = OFDM_RAND_SEED;
 
 	// Buffers for the baseband samples and the interpolated samples. Buffer size is one symbol plus cyclic prefix
-	int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N];
-	int16_t interpolated_samples[MAX_INTERP_RATE * (OFDM_FFT_N + OFDM_CP_N)];
+	int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N + MAX_FIR_TAPS];
+	int16_t interpolated_samples[MAX_INTERP_RATE * (OFDM_FFT_N + OFDM_CP_N + MAX_FIR_TAPS)];
 
 	// Test Randomizer
 	printf("Randomizer Test: %i\r\n", Transmitter.Syncfield.Fields.RandomizerIndex);
