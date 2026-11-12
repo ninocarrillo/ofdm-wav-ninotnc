@@ -733,8 +733,12 @@ int16_t GetFastFilterOutput(int16_t *samples, int sample_i, int sample_n, int16_
             inputSamples = &samples[sample_n-1];
         }
 	}
-	if ((sum > 32767) || (sum < -32768)) {
+	if (sum > 32767) {
+		sum = 32767;
 		printf("**************************************************GFFO OVERFLOW******************************************\r\n");
+	} else if (sum < -32768) {
+		sum = -32768;
+		printf("**************************************************GFFO UNDERFLOW*****************************************\r\n");
 	}
 	return (int16_t)sum;
 }

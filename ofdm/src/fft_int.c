@@ -535,15 +535,13 @@ void complex_mul_q15(int16_t *a, int16_t *b, int16_t *result) {
     result[1] += ((int32_t)a[0] * (int32_t)b[1]) >> 15;
 }
 
-void ComplexRotate_q15(int16_t *cplx_pair, int angle, int stage_count) {
+void ComplexRotate_q15(int16_t *cplx_pair, int angle) {
    // Apply rotation to a complex sample pair.
    // Used twiddle factors.
    // cplx_pair points to real value, +1 points to imag value.
    // angle specified in units of pi/512
 
    // Bound angle in acceptable range
-
-   angle <<=(10-stage_count);
 
    while (angle < -512) {
       angle += 1024;

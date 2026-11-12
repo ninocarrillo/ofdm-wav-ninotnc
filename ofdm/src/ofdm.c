@@ -1074,8 +1074,8 @@ void CalcEqTap(int16_t *ref, int16_t *tap) {
   */
 void OFDMAdjSTO(OFDM_Rx_struct *rx, int sto_adj) {
     for (int i = 0; i < OFDM_FFT_N>>1; i++) {
-        int k = sto_adj * i;
-        ComplexRotate_q15(&rx->FFTBuf[i<<1], k, OFDM_FFT_STAGE_N);
+        int k = sto_adj * i << (10 - OFDM_FFT_STAGE_N);
+        ComplexRotate_q15(&rx->FFTBuf[i<<1], k);
     }
 }
 
@@ -1298,8 +1298,9 @@ void OFDMPilotTiming(OFDM_Rx_struct *rx) {
     if (angle_err != 0) {
         for (int i = 0; i < OFDM_FFT_N>>1; i++) {
             int bin_i = i<<1;
-            int16_t rotation = (angle_err * (int32_t)i) >> 6;
-            ComplexRotate_q15(&rx->FFTBuf[bin_i], rotation, OFDM_FFT_STAGE_N);
+            int16_t rotation = angle_err * (int32_t)i;
+			// ComplexRotate_q15 expects units pi = 512, so need to scale rotation down by factor of 64.
+            ComplexRotate_q15(&rx->FFTBuf[bin_i], rotation>>6);
         }
     }
 	
