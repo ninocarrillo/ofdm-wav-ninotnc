@@ -861,14 +861,14 @@ int Decimate(Decimator_struct *deci, int16_t sample) {
         if (deci->PeakDetector.Envelope > 30000) {
             deci->PrescalerShift++;
             deci->PeakDetector.Envelope /= 2;
-            if (deci->PrescalerShift > 3) {
-                deci->PrescalerShift = 3;
+            if (deci->PrescalerShift > 2) {
+                deci->PrescalerShift = 2;
             }
         } else if (deci->PeakDetector.Envelope < 10000) {
             deci->PrescalerShift--;
             deci->PeakDetector.Envelope *= 2;
-            if (deci->PrescalerShift < -1) {
-                deci->PrescalerShift = -1;
+            if (deci->PrescalerShift < -2) {
+                deci->PrescalerShift = -2;
             }
         } 
     }
