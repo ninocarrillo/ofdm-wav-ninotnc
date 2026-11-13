@@ -535,19 +535,22 @@ void complex_mul_q15(int16_t *a, int16_t *b, int16_t *result) {
     result[1] += ((int32_t)a[0] * (int32_t)b[1]) >> 15;
 }
 
-void ComplexRotate_q15(int16_t *cplx_pair, int angle) {
+void ComplexRotate_q15(int16_t *cplx_pair, int32_t angle) {
    // Apply rotation to a complex sample pair.
    // Used twiddle factors.
    // cplx_pair points to real value, +1 points to imag value.
-   // angle specified in units of pi/512
+   // angle normalized to pi = 32768
+
+	// Normalize angle to internal FFT resolution
+	angle = angle >> ((FFT_EXTERNAL_Q_BITS - FFT_DESIGN_STAGE_N) + 1);
 
    // Bound angle in acceptable range
 
-   while (angle < -512) {
-      angle += 1024;
+   while (angle < -(FFT_DESIGN_N>>1)) {
+      angle += FFT_DESIGN_N;
    }
-   while (angle >= 512) {
-      angle -= 1024;
+   while (angle >= FFT_DESIGN_N>>1) {
+      angle -= FFT_DESIGN_N;
    }
 
    int16_t twiddle[2];
@@ -556,7 +559,7 @@ void ComplexRotate_q15(int16_t *cplx_pair, int angle) {
    sample[1] = cplx_pair[1];
 
    // Double angle due to i+1 sequential memory
-   if (angle == -512) {
+   if (angle == -(FFT_DESIGN_N>>1)) {
       twiddle[0] = -fft1024twiddles[0];
       twiddle[1] = 0;
    } else if (angle < 0) {

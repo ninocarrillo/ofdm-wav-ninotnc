@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-#define STO_ADJ (-(OFDM_CP_N>>1))
+#define OFDM_STO_ADJ (-(OFDM_CP_N>>1))
 
 // receiver state
 typedef enum ofdm_rx_states_e	{

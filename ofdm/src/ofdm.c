@@ -1067,14 +1067,14 @@ void CalcEqTap(int16_t *ref, int16_t *tap) {
 
 /**
   * @brief Apply subcarrier-based constellation rotation to adjust apparent sample time offset
-  * @note ComplexRotate_q15 assumes FFT1024
   * @param rx pointer to receiver memory structure
   * @param sto_adj adjustment increment in units of samples
   * @retval none
   */
 void OFDMAdjSTO(OFDM_Rx_struct *rx, int sto_adj) {
     for (int i = 0; i < OFDM_FFT_N>>1; i++) {
-        int k = sto_adj * i << (10 - OFDM_FFT_STAGE_N);
+		int32_t scale_factor = (1 + FFT_EXTERNAL_Q_BITS) - OFDM_FFT_STAGE_N;
+        int32_t k = ((int32_t)sto_adj * (int32_t)i) << scale_factor;
         ComplexRotate_q15(&rx->FFTBuf[i<<1], k);
     }
 }
@@ -1110,7 +1110,7 @@ void OFDMCalcEq_2(OFDM_Rx_struct *rx) {
     // which occupy OFDM_FFT_N memory locations. The DC bin is offset zero.
     RFFT(rx->FFTBuf, OFDM_FFT_STAGE_N);
 
-    OFDMAdjSTO(rx, STO_ADJ);
+    OFDMAdjSTO(rx, OFDM_STO_ADJ);
 
     for(int i = 0; i < OFDM_FFT_N; i++) {
         // Set equalizer taps to zero.
@@ -1236,6 +1236,7 @@ int16_t calc_pilot_angle(int16_t *iq) {
 	int16_t angle_mem[ofdm_pilot_n];
     for (int i = 0; i < ofdm_pilot_n; i++) {
         int bin_i = OFDM_Pilot_Bins[i] << 1;
+		// Determine phase of this pilot, normalized to pi radians = 32768
         int16_t angle = ApproxATan2_q15(iq[bin_i], iq[bin_i+1]);
         // Normalize angle to bin number
         angle = ((int32_t)angle * (int32_t)OFDM_Pilot_Bin_Inv[i]) >> 15;
@@ -1291,7 +1292,7 @@ void OFDMPilotTiming(OFDM_Rx_struct *rx) {
     // to magnitude 16384, and all pilot tones have zero phase
     // at transmission. 
     
-	// angle_err is in units of radians scaled so 32768 = pi
+	// angle_err is in units of radians scaled so 32768 = pi radians
 	int16_t angle_err = calc_pilot_angle(rx->FFTBuf);
 	
 	//printf("Uncorrected pilot angle err %i\r\n", angle_err);
@@ -1299,8 +1300,8 @@ void OFDMPilotTiming(OFDM_Rx_struct *rx) {
         for (int i = 0; i < OFDM_FFT_N>>1; i++) {
             int bin_i = i<<1;
             int16_t rotation = angle_err * (int32_t)i;
-			// ComplexRotate_q15 expects units pi = 512, so need to scale rotation down by factor of 64.
-            ComplexRotate_q15(&rx->FFTBuf[bin_i], rotation>>6);
+			// ComplexRotate_q15 expects units pi = 32768.
+            ComplexRotate_q15(&rx->FFTBuf[bin_i], rotation);
         }
     }
 	
@@ -1649,7 +1650,7 @@ int OFDMDataReceive(OFDM_Rx_struct *rx, int16_t sample) {
 
 		 RFFT(rx->FFTBuf, OFDM_FFT_STAGE_N);
 
-        OFDMAdjSTO(rx, STO_ADJ);
+        OFDMAdjSTO(rx, OFDM_STO_ADJ);
 
         // Apply equalizer correction
         for (int i = 0; i < OFDM_FFT_N>>1; i++) {
