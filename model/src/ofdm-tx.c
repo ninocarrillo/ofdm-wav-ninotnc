@@ -90,17 +90,17 @@ int main(int arg_count, char* arg_values[]) {
 		return(-1);
 	}
 
-	if ((interp_rate_arg > MAX_INTERP_RATE) || (interp_rate_arg < 1)) {
+	if ((interp_rate_arg > OFDM_TX_MAX_INTERP_RATE) || (interp_rate_arg < 1)) {
 		printf("Interp rate must be between 1 and 8.\r\n");
 		return(-1);
 	}
 
 	Interpolator_struct Interpolator;
 	Interpolator.Rate = interp_rate_arg;
-	Interpolator.TapN = INTERP_FIR_N;
+	Interpolator.TapN = OFDM_TX_INTERP_FIR_N;
 	Interpolator.CircN = DSP_MAX_FIR_TAPS;
 	Interpolator.CircIndex = 0;
-	GenInterpFIR2(Interpolator.Taps, INTERP_FIR_CUTOFF, OFDM_FFT_SAMPLE_RATE * interp_rate_arg, interp_rate_arg, Interpolator.TapN);
+	GenInterpFIR2(Interpolator.Taps, OFDM_TX_INTERP_FIR_CUTOFF, OFDM_FFT_SAMPLE_RATE * interp_rate_arg, interp_rate_arg, Interpolator.TapN);
 	
 	
 	WAVHdr_struct wav_header;
@@ -120,7 +120,7 @@ int main(int arg_count, char* arg_values[]) {
 
 	// Buffers for the baseband samples and the interpolated samples. Buffer size is one symbol plus cyclic prefix
 	int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N + DSP_MAX_FIR_TAPS];
-	int16_t interpolated_samples[MAX_INTERP_RATE * (OFDM_FFT_N + OFDM_CP_N + DSP_MAX_FIR_TAPS)];
+	int16_t interpolated_samples[OFDM_TX_MAX_INTERP_RATE * (OFDM_FFT_N + OFDM_CP_N + DSP_MAX_FIR_TAPS)];
 
 	// Test Randomizer
 	printf("Randomizer Test: %i\r\n", Transmitter.Syncfield.Fields.RandomizerIndex);
@@ -138,10 +138,10 @@ int main(int arg_count, char* arg_values[]) {
 		
 
 		// A buffer for the payload data
-		uint8_t input_data[MAX_PAYLOAD+2];
+		uint8_t input_data[OFDM_TX_BUF_LEN];
 		
 		// Read one line of the input text file
-		fgets((char *)input_data, MAX_PAYLOAD, input_file);
+		fgets((char *)input_data, OFDM_TX_BUF_LEN, input_file);
 		
 
 		// Generate sync symbol
