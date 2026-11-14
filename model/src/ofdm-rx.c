@@ -100,11 +100,6 @@ int main(int arg_count, char* arg_values[]) {
 			int sample_exists = 0;
 			int16_t sample = 0;
 			if (decimate > 1) {
-				if (Receiver.EnableAGC) {
-					Decimator.EnableAGC = 1;
-				} else {
-					Decimator.EnableAGC = 0;
-				}
 				sample_exists = Decimate(&Decimator, input_buffer[i]);
 				sample = Decimator.Output;
 				//sample = input_buffer[i];
@@ -115,36 +110,9 @@ int main(int arg_count, char* arg_values[]) {
 			if (sample_exists) {
 				int16_t sync_detect = 0;
 				int decoded_byte_count = 0;
-				Receiver.AGCFreezeSampleCount++;
 				switch(Receiver.State) {
 				case OFDM_RX_SEARCH:
-		            if (Receiver.AGCFreezeSampleCount > OFDM_AGC_FREEZE_HOLD) {
-	            		Receiver.AGCFreezeSampleCount = OFDM_AGC_FREEZE_HOLD;
-	                	if (Receiver.EnableAGC == 0) {
-	                		// Enable AGC
-							printf("*** Enable AGC %li\r\n", absolute_offset);
-							Receiver.EnableAGC = 1;
-	                	}
-	            	}
 					sync_detect = OFDMSyncSearch(&Receiver, sample);
-					if (Receiver.EnableAGC) { 
-						if (sync_detect) {
-							printf("&&&&&&&&&&&&&&&&&&&&&&&& THIS RIGHT HERE &&&&&&&&&&&&&&&&&&&&&&&&&\r\n");
-						}
-						sync_detect = 0;
-						if (Receiver.PresyncDetectFlag) {
-							printf("*** Presync Detect %li\r\n", absolute_offset);
-							// Disable AGC
-							Receiver.EnableAGC = 0;
-							Receiver.AGCFreezeSampleCount = 0;
-		                    Receiver.PresyncSNRFreeze = Receiver.PresyncSNR;
-						}
-					} else {
-						if (Receiver.PresyncDetectFlag) {
-							printf("*** Presync Redetect %li\r\n", absolute_offset);
-							Receiver.AGCFreezeSampleCount = 0;
-						}
-					}
 					OFDMSyncDump(&Receiver, &OFDM_Dev);
 					if (sync_detect > 0) {
 						sync_count++;
@@ -201,7 +169,6 @@ int main(int arg_count, char* arg_values[]) {
 				case OFDM_RX_DATA:
 					decoded_byte_count = OFDMDataReceive(&Receiver, sample);
 					if (decoded_byte_count > 0) {
-						Receiver.AGCFreezeSampleCount = 0;
 						for (int i = 0; i < decoded_byte_count; i++) {
 							output_data[packet_payload_count++] = Receiver.DataBuf[i];
 						}

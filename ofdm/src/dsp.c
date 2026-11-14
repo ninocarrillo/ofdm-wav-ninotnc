@@ -853,6 +853,30 @@ int Decimate(Decimator_struct *deci, int16_t sample) {
         // Perform filter
         deci->Output = GetFastFilterOutput(deci->CircBuf, deci->CircIndex, deci->CircN, deci->Taps, deci->TapN, deci->PrescalerShift);
 
+    }
+    return data_flag;
+}
+int DecimateAGC(Decimator_struct *deci, int16_t sample) {
+    int data_flag = 0;
+    // Advance the circular buffer index;
+    deci->CircIndex++;
+    // Check for rollover
+    if (deci->CircIndex >= deci->CircN) {
+        deci->CircIndex = 0;
+    }
+    // Put new sample in circular buffer
+    //deci->CircBuf[deci->CircIndex] = UpdateIIROrder1(&deci->HPF, sample);
+    deci->CircBuf[deci->CircIndex] = sample;
+    // Advance the decimation index
+    deci->DeciIndex++;
+    // Check for rollover
+    if (deci->DeciIndex >= deci->Rate) {
+        deci->DeciIndex = 0;
+        // There is rollover, indicate new data will be available
+        data_flag = 1;
+        // Perform filter
+        deci->Output = GetFastFilterOutput(deci->CircBuf, deci->CircIndex, deci->CircN, deci->Taps, deci->TapN, deci->PrescalerShift);
+
         if (deci->EnableAGC) {
             PeakDetect(deci->Output, &deci->PeakDetector);
         } 
