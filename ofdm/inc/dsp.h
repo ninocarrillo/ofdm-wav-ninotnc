@@ -8,14 +8,14 @@
 #ifndef DSP_H
 #define	DSP_H
 
-#define MAX_FIR_TAPS 501
+#define DSP_MAX_FIR_TAPS 501
 #define DSP_NORM_FREQ 86400
 
 #include <stdint.h>
 
 typedef struct {
-	int16_t CircBuf[MAX_FIR_TAPS];
-	int16_t Taps[MAX_FIR_TAPS];
+	int16_t CircBuf[DSP_MAX_FIR_TAPS];
+	int16_t Taps[DSP_MAX_FIR_TAPS];
 	int TapN;
 	int CircIndex;
 	int CircN;
@@ -43,8 +43,8 @@ typedef struct {
 typedef struct {
 	Int16_Peak_Detector_struct PeakDetector;
 	IIR_Order1_struct HPF;
-	int16_t CircBuf[MAX_FIR_TAPS];
-	int16_t Taps[MAX_FIR_TAPS];
+	int16_t CircBuf[DSP_MAX_FIR_TAPS];
+	int16_t Taps[DSP_MAX_FIR_TAPS];
 	int16_t Output;
 	int16_t PrescalerShift;
 	int TapN;

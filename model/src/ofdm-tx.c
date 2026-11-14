@@ -98,7 +98,7 @@ int main(int arg_count, char* arg_values[]) {
 	Interpolator_struct Interpolator;
 	Interpolator.Rate = interp_rate_arg;
 	Interpolator.TapN = INTERP_FIR_N;
-	Interpolator.CircN = MAX_FIR_TAPS;
+	Interpolator.CircN = DSP_MAX_FIR_TAPS;
 	Interpolator.CircIndex = 0;
 	GenInterpFIR2(Interpolator.Taps, INTERP_FIR_CUTOFF, OFDM_FFT_SAMPLE_RATE * interp_rate_arg, interp_rate_arg, Interpolator.TapN);
 	
@@ -119,8 +119,8 @@ int main(int arg_count, char* arg_values[]) {
 	Transmitter.Randomizer = OFDM_RAND_SEED;
 
 	// Buffers for the baseband samples and the interpolated samples. Buffer size is one symbol plus cyclic prefix
-	int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N + MAX_FIR_TAPS];
-	int16_t interpolated_samples[MAX_INTERP_RATE * (OFDM_FFT_N + OFDM_CP_N + MAX_FIR_TAPS)];
+	int16_t baseband_samples[OFDM_FFT_N + OFDM_CP_N + DSP_MAX_FIR_TAPS];
+	int16_t interpolated_samples[MAX_INTERP_RATE * (OFDM_FFT_N + OFDM_CP_N + DSP_MAX_FIR_TAPS)];
 
 	// Test Randomizer
 	printf("Randomizer Test: %i\r\n", Transmitter.Syncfield.Fields.RandomizerIndex);
@@ -246,7 +246,7 @@ int main(int arg_count, char* arg_values[]) {
 	}
 	
 
-	int silence_count = MAX_FIR_TAPS;
+	int silence_count = DSP_MAX_FIR_TAPS;
 
 	// Put some silence at the end of the file.
 	for (int i = 0; i < silence_count; i++) {

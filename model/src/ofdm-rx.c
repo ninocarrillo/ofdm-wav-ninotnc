@@ -35,7 +35,7 @@ int main(int arg_count, char* arg_values[]) {
 	int decimate = 1;
 	int file_sample_rate = WavHdrGetSampleRate(&wav_header);
 	int decimated_sample_rate = file_sample_rate;
-	while ((decimated_sample_rate != OFDM_FFT_SAMPLE_RATE) && (decimate <= MAX_DECI_RATE)) {
+	while ((decimated_sample_rate != OFDM_FFT_SAMPLE_RATE) && (decimate <= OFDM_RX_MAX_DECI_RATE)) {
 		decimate++;
 		decimated_sample_rate = file_sample_rate / decimate;
 	}
@@ -66,13 +66,13 @@ int main(int arg_count, char* arg_values[]) {
 	// Generate a decimator to reduce sample rate if required.
 	Decimator_struct Decimator;
 	Decimator.Rate = decimate;
-	Decimator.TapN = DECI_FIR_N;
+	Decimator.TapN = OFDM_RX_DECI_FIR_N;
 	Decimator.CircIndex = 0;
 	Decimator.DeciIndex = 0;
-	Decimator.CircN = MAX_FIR_TAPS;
-    GenLPFIR2(Decimator.Taps, DECI_FIR_CUTOFF, file_sample_rate, Decimator.TapN, 1);
+	Decimator.CircN = DSP_MAX_FIR_TAPS;
+    GenLPFIR2(Decimator.Taps, OFDM_RX_DECI_FIR_CUTOFF, file_sample_rate, Decimator.TapN, 1);
     Decimator.PrescalerShift = 0;
-	GenHPFIIR(&Decimator.HPF, 10, file_sample_rate);
+	//GenHPFIIR(&Decimator.HPF, 10, file_sample_rate);
 
 	OFDM_Rx_struct Receiver;
 	OFDMRxInit(&Receiver);
