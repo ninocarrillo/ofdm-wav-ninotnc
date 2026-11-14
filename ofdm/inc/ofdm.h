@@ -15,8 +15,8 @@
 #define OFDM_FFT_SAMPLE_RATE 6000
 #define OFDM_BIN_HZ ((double)OFDM_FFT_SAMPLE_RATE / (double)OFDM_FFT_N)
 #define OFDM_PREAMBLE_SAMPLE_COUNT 120
-#define OFDM_PREAMBLE_BIN_1 47
-#define OFDM_PREAMBLE_BIN_2 83
+#define OFDM_PREAMBLE_BIN_1 49
+#define OFDM_PREAMBLE_BIN_2 87
 #define OFDM_PREAMBLE_TONE_1 (OFDM_BIN_HZ * OFDM_PREAMBLE_BIN_1)
 #define OFDM_PREAMBLE_TONE_2 (OFDM_BIN_HZ * OFDM_PREAMBLE_BIN_2)
 #define OFDM_AGC_FREEZE_HOLD ((OFDM_FFT_N + OFDM_CP_N) * 4)
@@ -81,7 +81,7 @@ typedef enum ofdm_const_e	{
 // saturation. Higher number provides more attenuation but reduces 
 // dynamic range.
 // Number represents right bit shift.
-#define OFDM_FFT_SHIFT 3
+#define OFDM_FFT_SHIFT 4
 
 // Scaling metric applied to time-domain samples after RIFFT.
 // Number represents left bit shift.
