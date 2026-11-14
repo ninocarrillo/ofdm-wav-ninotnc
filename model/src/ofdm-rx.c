@@ -71,9 +71,6 @@ int main(int arg_count, char* arg_values[]) {
 	Decimator.DeciIndex = 0;
 	Decimator.CircN = MAX_FIR_TAPS;
     GenLPFIR2(Decimator.Taps, DECI_FIR_CUTOFF, file_sample_rate, Decimator.TapN, 1);
-    Decimator.PeakDetector.AttackRate = 500;
-    Decimator.PeakDetector.SustainPeriod = 50;
-    Decimator.PeakDetector.DecayRate = 5;
     Decimator.PrescalerShift = 0;
 	GenHPFIIR(&Decimator.HPF, 10, file_sample_rate);
 
@@ -82,7 +79,7 @@ int main(int arg_count, char* arg_values[]) {
 
 	OFDM_Dev_struct OFDM_Dev;
 
-	uint8_t output_data[MAX_PAYLOAD+2];
+	uint8_t output_data[OFDM_RX_BUF_LEN];
 	int packet_payload_count;
 
 	int16_t input_buffer[2048];
