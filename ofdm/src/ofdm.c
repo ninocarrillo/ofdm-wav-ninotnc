@@ -1240,16 +1240,19 @@ int16_t calc_pilot_angle(int16_t *iq) {
     // Calculate sample time offset for each carrier
     int16_t ofdm_pilot_n = OFDM_PILOT_N;
     int32_t angle_sum = 0;
-	int16_t angle_mem[ofdm_pilot_n];
+	int32_t angle_mem[ofdm_pilot_n];
     for (int i = 0; i < ofdm_pilot_n; i++) {
         int bin_i = OFDM_Pilot_Bins[i] << 1;
 		// Determine phase of this pilot, normalized to pi radians = 32768
-        int16_t angle = ApproxATan2_q15(iq[bin_i], iq[bin_i+1]);
+        int32_t angle = ApproxATan2_q15(iq[bin_i], iq[bin_i+1]);
         // Normalize angle to bin number
-        angle = ((int32_t)angle * (int32_t)OFDM_Pilot_Bin_Inv[i]) >> 15;
+		while (angle < 0) {
+			angle += 65536;
+		}
+        angle = (angle * (int32_t)OFDM_Pilot_Bin_Inv[i]) >> 15;
 		angle_mem[i] = angle;
         angle_sum += (int32_t)angle;
-        //printf("pilot %i:%i+%ij, %i |  ", i, iq[bin_i], iq[bin_i+1], angle);
+        //printf("\r\npilot %i:%i+%ij, %i |  ", i, iq[bin_i], iq[bin_i+1], angle);
     }
     //angle_sum /= ofdm_pilot_n;
     angle_sum = near_div(angle_sum, ofdm_pilot_n);
@@ -1306,7 +1309,7 @@ void OFDMPilotTiming(OFDM_Rx_struct *rx) {
     if (angle_err != 0) {
         for (int i = 0; i < OFDM_FFT_N>>1; i++) {
             int bin_i = i<<1;
-            int16_t rotation = angle_err * (int32_t)i;
+            int32_t rotation = (int32_t)angle_err * (int32_t)i;
 			// ComplexRotate_q15 expects units pi = 32768.
             ComplexRotate_q15(&rx->FFTBuf[bin_i], rotation);
         }
