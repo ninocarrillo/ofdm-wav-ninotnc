@@ -1234,22 +1234,21 @@ int16_t near_div(int32_t big, int16_t small) {
   * @param iq pointer to base index of buffer containing RFFT of this data symbol, ordered real, imaginary
   * @param bandwidth the bandwidth selector from the syncfield
   * @note this funciton is only used by OFDMPilotTiming()
+  * @note this function is limited to +/- 180 degrees of pilot phase error
   * @retval normalized radians per subcarrier, scaled 32768 = pi radians
   */
 int16_t calc_pilot_angle(int16_t *iq) {
     int16_t ofdm_pilot_n = OFDM_PILOT_N;
     int32_t angle_sum = 0;
-	int32_t angle_mem[ofdm_pilot_n];
+	 int32_t angle_mem[ofdm_pilot_n];
     for (int i = 0; i < ofdm_pilot_n; i++) {
         int bin_i = OFDM_Pilot_Bins[i] << 1;
-		// Determine phase of this pilot, normalized to pi radians = 32768
+		  // Determine phase of this pilot, normalized to pi radians = 32768
         int32_t angle = ApproxATan2_q15(iq[bin_i], iq[bin_i+1]);
+
         // Normalize angle to bin number
-		while (angle < 0) {
-		 	angle += 65536;
-		}
         angle = (angle * (int32_t)OFDM_Pilot_Bin_Inv[i]) >> 15;
-		angle_mem[i] = angle;
+		  angle_mem[i] = angle;
         angle_sum += (int32_t)angle;
         //printf("\r\npilot %i:%i+%ij, %i |  ", i, iq[bin_i], iq[bin_i+1], angle);
     }
