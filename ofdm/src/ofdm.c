@@ -1257,7 +1257,7 @@ int16_t calc_pilot_angle(int16_t *iq) {
     //angle_sum /= ofdm_pilot_n;
     angle_sum = near_div(angle_sum, ofdm_pilot_n);
     //printf("\r\nAverage angle per bin: %i\r\n", angle_sum);
-	if (0) {
+	if (1) {
     	// Exclude the subcarrier most distant from the mean.
     	int16_t distances[ofdm_pilot_n];
     	for (int i = 0; i < ofdm_pilot_n; i++) {
