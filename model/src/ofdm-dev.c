@@ -66,8 +66,10 @@ void OFDMSymbolSVG(OFDM_Rx_struct *rx, int sync_sequence, int symbol_sequence) {
         int text_line_int = 1500;
         int text_x = -32767;
         int text_y = -32767 + text_size;
-        double sto = (double)rx->AppliedPilotAngle/64;
-        double tb_delta = -(1e6 * sto) / (((double)OFDM_CP_N + (double)OFDM_FFT_N) * ((double)symbol_sequence+1));
+        double time_offset = ((double)rx->AppliedPilotAngle * (double)OFDM_FFT_N) / (65536.0 * OFDM_FFT_SAMPLE_RATE);
+        double sample_offset = time_offset * (double)OFDM_FFT_SAMPLE_RATE;
+        double elapsed_time = (double)(symbol_sequence+1) * (double)(OFDM_FFT_N+OFDM_CP_N) / (double)OFDM_FFT_SAMPLE_RATE;
+        double tb_delta = -1e6 * time_offset / elapsed_time;
         snprintf(work_string, sizeof(work_string), "x='%i' y='%i'", text_x, text_y);
         fprintf(svg, " <text %s font-family='Arial, sans-serif' font-size='1000' fill='black'>", work_string);
         fprintf(svg, "I/Q Plot, Sync Sequence %i, Symbol %i", sync_sequence, symbol_sequence);
@@ -95,7 +97,7 @@ void OFDMSymbolSVG(OFDM_Rx_struct *rx, int sync_sequence, int symbol_sequence) {
         text_y += text_line_int;
         snprintf(work_string, sizeof(work_string), "x='%i' y='%i'", text_x, text_y);
         fprintf(svg, " <text %s font-family='Arial, sans-serif' font-size='1000' fill='black'>", work_string);
-        fprintf(svg, "STO: %.2f samples", sto);
+        fprintf(svg, "Baseband Sample Offset: %.2f samples", sample_offset);
         fprintf(svg, " </text>\r\n");
         text_y += text_line_int;
         snprintf(work_string, sizeof(work_string), "x='%i' y='%i'", text_x, text_y);

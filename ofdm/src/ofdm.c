@@ -1237,7 +1237,6 @@ int16_t near_div(int32_t big, int16_t small) {
   * @retval normalized radians per subcarrier, scaled 32768 = pi radians
   */
 int16_t calc_pilot_angle(int16_t *iq) {
-    // Calculate sample time offset for each carrier
     int16_t ofdm_pilot_n = OFDM_PILOT_N;
     int32_t angle_sum = 0;
 	int32_t angle_mem[ofdm_pilot_n];
@@ -1247,7 +1246,7 @@ int16_t calc_pilot_angle(int16_t *iq) {
         int32_t angle = ApproxATan2_q15(iq[bin_i], iq[bin_i+1]);
         // Normalize angle to bin number
 		while (angle < 0) {
-			angle += 65536;
+		 	angle += 65536;
 		}
         angle = (angle * (int32_t)OFDM_Pilot_Bin_Inv[i]) >> 15;
 		angle_mem[i] = angle;
@@ -1303,6 +1302,7 @@ void OFDMPilotTiming(OFDM_Rx_struct *rx) {
     // at transmission. 
     
 	// angle_err is in units of radians scaled so 32768 = pi radians
+   // calc_pilot_angle returns average phase error per bin
 	int16_t angle_err = calc_pilot_angle(rx->FFTBuf);
 	
 	//printf("Uncorrected pilot angle err %i\r\n", angle_err);
