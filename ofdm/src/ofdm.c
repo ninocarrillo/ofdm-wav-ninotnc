@@ -1030,9 +1030,8 @@ int16_t DetectSC_7(OFDM_Rx_struct *rx) {
             if ((rx->P1MA > rx->E>>1) && (rx->E > OFDM_SC_ARM_E_THRESH)) {
                 rx->SyncArm = 1;
                 rx->SyncArmEnergy = rx->E;
-				int16_t x = rx->E >> 4;
-				rx->EHighLimit = rx->E + x;
-				rx->ELowLimit = rx->E - x;
+				rx->EHighLimit = rx->E + (rx->E>>4);
+				rx->ELowLimit = rx->E - (rx->E>>5);
                 rx->P1Max = 0;
                 rx->SyncDelay = 0;
                 rx->SyncInhibitTimer = 0;
