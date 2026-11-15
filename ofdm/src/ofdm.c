@@ -1031,7 +1031,7 @@ int16_t DetectSC_7(OFDM_Rx_struct *rx) {
                 rx->SyncArm = 1;
                 rx->SyncArmEnergy = rx->E;
 				rx->EHighLimit = rx->E + (rx->E>>4);
-				rx->ELowLimit = rx->E - (rx->E>>5);
+				rx->ELowLimit = rx->E - (rx->E>>6);
                 rx->P1Max = 0;
                 rx->SyncDelay = 0;
                 rx->SyncInhibitTimer = 0;
