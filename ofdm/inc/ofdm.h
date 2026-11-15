@@ -163,6 +163,8 @@ typedef struct {
 	int SyncArm;
 	int16_t SyncInhibitTimer;
 	int16_t SyncArmEnergy;
+	int16_t EHighLimit;
+	int16_t ELowLimit;
 	int16_t RandomizerIndex;
 	uint16_t Randomizer;
 	int CircIndex1;
@@ -175,7 +177,6 @@ typedef struct {
 	int Delay;
 	int BytesRemaining;
 	int WorkingBitCount;
-	int ValidSyncCRC;
 	uint8_t WorkingByte;
 	int FirstBin;
 	int LastBin;
@@ -187,10 +188,11 @@ typedef struct {
 	int16_t AppliedPilotAngle;
     int16_t SNR;
     int16_t PresyncSNR;
-    int16_t PresyncSNRFreeze;
     int32_t AGCFreezeSampleCount;
     uint16_t PresyncDetectFlag :1;
     uint16_t EnableAGC :1;
+	uint16_t ValidSyncCRC :1;
+	int EBreakouts;
 } OFDM_Rx_struct;
 
 

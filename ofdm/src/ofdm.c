@@ -944,7 +944,7 @@ void IdleSC(OFDM_Rx_struct *rx) {
   * @param rx pointer to receiver memory structure
   * @retval SyncResult sample count from current circular buffer index to sync detect point in history (0 if none)
   */
-int16_t DetectSC_6(OFDM_Rx_struct *rx) {
+int16_t DetectSC_7(OFDM_Rx_struct *rx) {
     int norm_shift = (OFDM_FFT_STAGE_N+OFDM_SC_REG_BITS)-1;
     // Schmidl-Cox sync detection is founded on autocorrelation of the signal series
     // on a time-delay of 1/2 symbol. The sync symbol is intentionally 2-periodic, so
@@ -1009,7 +1009,12 @@ int16_t DetectSC_6(OFDM_Rx_struct *rx) {
             rx->SyncArm = 0;
             rx->Delay = OFDM_FFT_N + rx->SyncDelay + (OFDM_BUF2_N>>1);
             rx->SyncResult = 1;
-        }
+         } else if ((rx->E > rx->EHighLimit) || (rx->E < rx->ELowLimit)) {
+			 rx->SyncArm =  0;
+             rx->Delay = OFDM_FFT_N + rx->SyncDelay + (OFDM_BUF2_N>>1);
+			 rx->SyncResult = 1;
+			 rx->EBreakouts++;
+		}
         if (rx->P1MA > rx->P1Max) {
             rx->P1Max = rx->P1MA;
             rx->SyncDelay = 0;
@@ -1025,6 +1030,9 @@ int16_t DetectSC_6(OFDM_Rx_struct *rx) {
             if ((rx->P1MA > rx->E>>1) && (rx->E > OFDM_SC_ARM_E_THRESH)) {
                 rx->SyncArm = 1;
                 rx->SyncArmEnergy = rx->E;
+				int16_t x = rx->E >> 4;
+				rx->EHighLimit = rx->E + x;
+				rx->ELowLimit = rx->E - x;
                 rx->P1Max = 0;
                 rx->SyncDelay = 0;
                 rx->SyncInhibitTimer = 0;
@@ -1573,7 +1581,7 @@ int OFDMSyncSearch(OFDM_Rx_struct *rx, int16_t sample) {
         }
     }
     // Perform correlation
-    int sync_flag = DetectSC_6(rx);
+    int sync_flag = DetectSC_7(rx);
 
     return sync_flag;
 }

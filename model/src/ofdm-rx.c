@@ -92,6 +92,7 @@ int main(int arg_count, char* arg_values[]) {
 	int reject_count = 0;
 	int symbol_count = 0;
 	int16_t dc_offset = 0;
+	Receiver.EBreakouts = 0;
 	while((read_count = fread(input_buffer, sizeof(input_buffer[0]), 2048, input_wav_file)) > 0) {
 		for (int i = 0; i < read_count; i++) {
 			int sample_exists = 0;
@@ -217,6 +218,7 @@ int main(int arg_count, char* arg_values[]) {
 	printf("Valid payload packets decoded: %i\r\n", packet_count);
 	printf("Valid empty packets decoded: %i\r\n", empty_packet_count);
 	printf("Packets rejected for CRC: %i\r\n", reject_count);
+	printf("E Breakouts: %i\r\n", Receiver.EBreakouts);
 	printf("Done.\r\n");
 
 
